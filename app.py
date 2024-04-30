@@ -1,8 +1,10 @@
+import time
+import random
+
 import groq
 from groq import Groq
 import streamlit as st
-import time
-
+from extract_subs import prepare_prompt
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -11,11 +13,22 @@ if "api_key" not in st.session_state:
     st.session_state.api_key = ""
 
 if "page_reload_count" not in st.session_state:
+    placeholder_messages = random.choice(
+        [
+            "What's on your mind?",
+            "Ask me anything!",
+            "Let me summarize a YouTube video for you.",
+            "What's up?",
+            "YT Video summary? I'm here!",
+            "Just ask!",
+            "Vent out your thoughts!",
+        ]
+    )
     st.session_state.page_reload_count = 0
     st.session_state.messages.append(
         {
             "role": "assistant",
-            "content": "Hello! Want some fast responses? Ask me anything!",
+            "content": placeholder_messages,
         }
     )
 
@@ -28,13 +41,6 @@ st.markdown("# Fast Chat ⚡")
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-
-
-def response_generator(response_object: dict):
-    final_response = response_object.choices[0].message.content
-    for word in final_response.split():
-        yield word + " "
-        time.sleep(0.005)
 
 
 with st.sidebar:
@@ -76,7 +82,8 @@ with st.sidebar:
         help="A stochastic decoding method where the model considers the cumulative probability of the most likely tokens.",
     )
 
-if prompt := st.chat_input("What is up?"):
+if prompt := st.chat_input("Ask me anything!"):
+    YOUTUBE_LINK_FLAG = False
     # Add user message to chat history
     if st.session_state.api_key == "":
 
@@ -91,24 +98,65 @@ if prompt := st.chat_input("What is up?"):
             with st.chat_message("user"):
                 st.markdown(prompt)
 
-            # Display assistant response in chat message container
-            with st.chat_message("assistant"):
-                chat_completion = client.chat.completions.create(
-                    model=model,
-                    messages=st.session_state.messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    top_p=top_p,
-                )
-                if "script" in prompt or "code" in prompt:
-                    response = st.write(chat_completion.choices[0].message.content)
-                else:
-                    response = st.write_stream(response_generator(chat_completion))
+            # check if the prompt contains a youtube link and user asked something related to the video
+            matching_string = prompt.lower()
+            prompt_modified = None
+            if "youtube" in matching_string and ".com" in matching_string:
+                YOUTUBE_LINK_FLAG = True
+                with st.spinner("Extracting subtitles from the YouTube video..."):
+                    prompt_modified = prepare_prompt(prompt)
+                    YOUTUBE_LINK_FLAG = False
+                    if (
+                        prompt_modified
+                    ):  # only add the modified prompt if subtitles were extracted
+                        st.session_state.messages.append(
+                            {"role": "user", "content": prompt_modified}
+                        )
+                    # If subtitles were not extracted, then treat the prompt as a normal prompt
 
-            # Add assistant response to chat history
-            st.session_state.messages.append({"role": "assistant", "content": response})
+            spinner_message = random.choice(
+                [
+                    "Let me think...",
+                    "I'm on it...",
+                    "I'm working on it...",
+                    "I'm thinking...",
+                    "Gotcha! Let me think...",
+                ]
+            )
+            # Display assistant response in chat message container
+            with st.spinner(spinner_message):
+                with st.chat_message("assistant"):
+                    chat_completion = client.chat.completions.create(
+                        model=model,
+                        messages=st.session_state.messages,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        top_p=top_p,
+                    )
+
+                    model_output = chat_completion.choices[0].message.content
+
+                    if prompt_modified:
+                        # If subtitles were extracted, then remove the modified prompt from the chat history
+                        st.session_state.messages.pop()
+
+                    # Add assistant response to chat history
+                    st.session_state.messages.append(
+                        {
+                            "role": "assistant",
+                            "content": model_output,
+                        }
+                    )
+
+                    st.write(model_output)
+
         except groq.AuthenticationError:
             st.error("Invalid API key.")
             del st.session_state.api_key
             del st.session_state.messages
             del st.session_state.page_reload_count  # Display the welcome message again
+
+        except groq.BadRequestError as e:
+            with st.chat_message("assistant"):
+                st.write("I'm sorry, I don't understand.")
+                del st.session_state.messages
