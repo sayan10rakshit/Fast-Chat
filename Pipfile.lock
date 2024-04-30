@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "63e2b694654a5244db50b6d0f77eb4eeaf1ef5c07aba1ef6e8124e8ee092b856"
+            "sha256": "725c50c66052d07abfacf5173f9d87a6fd68d84c1176ca73b75c4e5b9d94ef90"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -669,11 +669,11 @@
         },
         "pydeck": {
             "hashes": [
-                "sha256:572d2e204b9244e26ad439a8094317c0a62a59f977561e7309f89be4d69eae7b",
-                "sha256:66d4333008921481c94cb89cfb96add2cc364122798bc79af99185c81f252995"
+                "sha256:0ab6e657210919fed2992cfad20afb4135d67ab6d8374f0b06fcc82b4e77b055",
+                "sha256:fd8b75f61ca0d4712d32b4e073440f1cb74f2e0c16a0b57e57a00e65c563cc54"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==0.9.0b1"
+            "version": "==0.9.0"
         },
         "pygments": {
             "hashes": [
@@ -690,6 +690,15 @@
             ],
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
             "version": "==2.9.0.post0"
+        },
+        "pytube": {
+            "hashes": [
+                "sha256:076052efe76f390dfa24b1194ff821d4e86c17d41cb5562f3a276a8bcbfc9d1d",
+                "sha256:07b9904749e213485780d7eb606e5e5b8e4341aa4dccf699160876da00e12d78"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.7'",
+            "version": "==15.0.0"
         },
         "pytz": {
             "hashes": [
@@ -959,6 +968,14 @@
             ],
             "markers": "platform_system != 'Darwin'",
             "version": "==4.0.0"
+        },
+        "youtube-transcript-api": {
+            "hashes": [
+                "sha256:019dbf265c6a68a0591c513fff25ed5a116ce6525832aefdfb34d4df5567121c",
+                "sha256:cad223d7620633cec44f657646bffc8bbc5598bd8e70b1ad2fa8277dec305eb7"
+            ],
+            "index": "pypi",
+            "version": "==0.6.2"
         }
     },
     "develop": {}

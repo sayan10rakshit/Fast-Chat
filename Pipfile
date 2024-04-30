@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 groq = "*"
 streamlit = "*"
+pytube = "*"
+youtube-transcript-api = "*"
 
 [dev-packages]
 

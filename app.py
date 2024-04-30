@@ -32,7 +32,6 @@ for message in st.session_state.messages:
 
 def response_generator(response_object: dict):
     final_response = response_object.choices[0].message.content
-    # final_response = response
     for word in final_response.split():
         yield word + " "
         time.sleep(0.005)
@@ -101,8 +100,11 @@ if prompt := st.chat_input("What is up?"):
                     max_tokens=max_tokens,
                     top_p=top_p,
                 )
-                response = st.write_stream(response_generator(chat_completion))
-                # response = st.write_stream(response_generator(prompt))
+                if "script" in prompt or "code" in prompt:
+                    response = st.write(chat_completion.choices[0].message.content)
+                else:
+                    response = st.write_stream(response_generator(chat_completion))
+
             # Add assistant response to chat history
             st.session_state.messages.append({"role": "assistant", "content": response})
         except groq.AuthenticationError:
