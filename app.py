@@ -126,29 +126,38 @@ if prompt := st.chat_input("Ask me anything!"):
             # Display assistant response in chat message container
             with st.spinner(spinner_message):
                 with st.chat_message("assistant"):
-                    chat_completion = client.chat.completions.create(
-                        model=model,
-                        messages=st.session_state.messages,
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                        top_p=top_p,
-                    )
+                    try:
+                        chat_completion = client.chat.completions.create(
+                            model=model,
+                            messages=st.session_state.messages,
+                            temperature=temperature,
+                            max_tokens=max_tokens,
+                            top_p=top_p,
+                        )
 
-                    model_output = chat_completion.choices[0].message.content
+                        model_output = chat_completion.choices[0].message.content
 
-                    if prompt_modified:
-                        # If subtitles were extracted, then remove the modified prompt from the chat history
-                        st.session_state.messages.pop()
+                        if prompt_modified:
+                            # If subtitles were extracted, then remove the modified prompt from the chat history
+                            st.session_state.messages.pop()
 
-                    # Add assistant response to chat history
-                    st.session_state.messages.append(
-                        {
-                            "role": "assistant",
-                            "content": model_output,
-                        }
-                    )
+                        # Add assistant response to chat history
+                        st.session_state.messages.append(
+                            {
+                                "role": "assistant",
+                                "content": model_output,
+                            }
+                        )
 
-                    st.write(model_output)
+                        st.write(model_output)
+                    except groq.RateLimitError:
+                        if prompt_modified:
+                            st.session_state.messages.pop()
+                        response = "Woaah! That's a pretty big video.\n Try again with a shorter one."
+                        st.session_state.messages.append(
+                            {"role": "assistant", "content": response}
+                        )
+                        st.write(response)
 
         except groq.AuthenticationError:
             st.error("Invalid API key.")
