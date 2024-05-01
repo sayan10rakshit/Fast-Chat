@@ -6,11 +6,18 @@ from groq import Groq
 import streamlit as st
 from extract_subs import prepare_prompt
 
+RESPONSE = "Sorry, that's on me.\nDue to limited hardware resources in \
+                            the free tier, I can't respond to this query.\nPlease try again later or \
+                                upgrade to a paid plan to get more hard"
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "api_key" not in st.session_state:
     st.session_state.api_key = ""
+
+if "remove_unnecessary_messages" not in st.session_state:
+    st.session_state.remove_unnecessary_messages = False
 
 if "page_reload_count" not in st.session_state:
     placeholder_messages = random.choice(
@@ -100,18 +107,20 @@ if prompt := st.chat_input("Ask me anything!"):
 
             # check if the prompt contains a youtube link and user asked something related to the video
             matching_string = prompt.lower()
-            prompt_modified = None
+            prompt_modified_list = None
             if "youtube" in matching_string and ".com" in matching_string:
                 YOUTUBE_LINK_FLAG = True
                 with st.spinner("Extracting subtitles from the YouTube video..."):
-                    prompt_modified = prepare_prompt(prompt)
+                    prompt_modified_list = prepare_prompt(prompt)
                     YOUTUBE_LINK_FLAG = False
                     if (
-                        prompt_modified
+                        prompt_modified_list
                     ):  # only add the modified prompt if subtitles were extracted
-                        st.session_state.messages.append(
-                            {"role": "user", "content": prompt_modified}
-                        )
+                        st.session_state.remove_unnecessary_messages = True
+                        for prompt_modified in prompt_modified_list:
+                            st.session_state.messages.append(
+                                {"role": "user", "content": prompt_modified}
+                            )
                     # If subtitles were not extracted, then treat the prompt as a normal prompt
 
             spinner_message = random.choice(
@@ -137,9 +146,14 @@ if prompt := st.chat_input("Ask me anything!"):
 
                         model_output = chat_completion.choices[0].message.content
 
-                        if prompt_modified:
+                        if (
+                            prompt_modified_list
+                            and st.session_state.remove_unnecessary_messages
+                        ):
                             # If subtitles were extracted, then remove the modified prompt from the chat history
-                            st.session_state.messages.pop()
+                            for _ in range(len(prompt_modified_list)):
+                                st.session_state.messages.pop()
+                            st.session_state.remove_unnecessary_messages = False
 
                         # Add assistant response to chat history
                         st.session_state.messages.append(
@@ -151,13 +165,17 @@ if prompt := st.chat_input("Ask me anything!"):
 
                         st.write(model_output)
                     except groq.RateLimitError:
-                        if prompt_modified:
-                            st.session_state.messages.pop()
-                        response = "Woaah! That's a pretty big video.\n Try again with a shorter one."
+                        if (
+                            prompt_modified_list
+                            and st.session_state.remove_unnecessary_messages
+                        ):
+                            for _ in range(len(prompt_modified_list)):
+                                st.session_state.messages.pop()
+                            st.session_state.remove_unnecessary_messages = False
                         st.session_state.messages.append(
-                            {"role": "assistant", "content": response}
+                            {"role": "assistant", "content": RESPONSE}
                         )
-                        st.write(response)
+                        st.write(RESPONSE)
 
         except groq.AuthenticationError:
             st.error("Invalid API key.")
@@ -165,7 +183,17 @@ if prompt := st.chat_input("Ask me anything!"):
             del st.session_state.messages
             del st.session_state.page_reload_count  # Display the welcome message again
 
-        except groq.BadRequestError as e:
+        except groq.BadRequestError:
             with st.chat_message("assistant"):
-                st.write("I'm sorry, I don't understand.")
+                st.write(RESPONSE + "\nLet's start afresh shall we? 😁")
+                del st.session_state.messages
+
+        except groq.InternalServerError:
+            with st.chat_message("assistant"):
+                st.write(RESPONSE + "\nLet's start afresh shall we? 😁")
+                del st.session_state.messages
+
+        except Exception:
+            with st.chat_message("assistant"):
+                st.write(RESPONSE + "\nLet's start afresh shall we? 😁")
                 del st.session_state.messages
