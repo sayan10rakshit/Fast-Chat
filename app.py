@@ -4,7 +4,7 @@ import random
 import groq
 from groq import Groq
 import streamlit as st
-from extract_subs import prepare_prompt
+from extract_subs import prepare_prompt, filter_links
 
 RESPONSE = "Sorry, that's on me.\nDue to limited hardware resources in \
                             the free tier, I can't respond to this query.\nPlease try again later or \
@@ -54,7 +54,12 @@ with st.sidebar:
     groq_api_key = st.text_input("GROQ API Key", type="password")
     if groq_api_key != "":
         st.session_state.api_key = groq_api_key
-    st.markdown("[Get your API key](https://console.groq.com/keys).")
+    st.markdown(
+        "[Get your FREE API key!](https://console.groq.com/keys)",
+        help="""Since running an LLM is computationally expensive, 
+        this app uses an API to run the model on the cloud.
+        See more details [here](https://wow.groq.com/)""",
+    )
 
     model = st.selectbox(
         "Select Model",
@@ -106,11 +111,16 @@ if prompt := st.chat_input("Ask me anything!"):
                 st.markdown(prompt)
 
             # check if the prompt contains a youtube link and user asked something related to the video
-            matching_string = prompt.lower()
+            # matching_string = prompt.lower()
             prompt_modified_list = None
-            if "youtube" in matching_string and ".com" in matching_string:
+            # if (
+            #     "youtube" in matching_string
+            #     and ".com" in matching_string
+            #     or "youtu.be" in matching_string
+            # ):
+            if filter_links(prompt):
                 YOUTUBE_LINK_FLAG = True
-                with st.spinner("Extracting subtitles from the YouTube video..."):
+                with st.spinner("Seeing the YouTube video..."):
                     prompt_modified_list = prepare_prompt(prompt)
                     YOUTUBE_LINK_FLAG = False
                     if (
