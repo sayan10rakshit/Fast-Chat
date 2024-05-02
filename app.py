@@ -102,6 +102,17 @@ def main():
             help="A stochastic decoding method where the model considers the cumulative probability of the most likely tokens.",
         )
 
+        if st.button("Clear Chat"):
+            st.session_state.messages = [
+                {
+                    "role": "assistant",
+                    "content": "Let's start afresh shall we? 😁",
+                }
+            ]
+            st.session_state.remove_unnecessary_messages = False
+            # reload the page to display the welcome message
+            st.rerun()
+
     if prompt := st.chat_input("Ask me anything!"):
         # Add user message to chat history
         if st.session_state.api_key == "":
