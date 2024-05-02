@@ -33,9 +33,9 @@ def main():
             [
                 "What's on your mind?",
                 "Ask me anything!",
-                "Let me summarize a YouTube video for you.",
+                "Let me summarize a YouTube video/shorts for you.",
                 "What's up?",
-                "YT Video summary? I'm here!",
+                "YT Video/Shorts summary? I'm here!",
                 "Just ask!",
                 "Vent out your thoughts!",
             ]
@@ -47,6 +47,9 @@ def main():
                 "content": placeholder_messages,
             }
         )
+
+    if "use_you_tube" not in st.session_state:
+        st.session_state.use_you_tube = False
 
     st.session_state.page_reload_count += (
         1  # will be incremented each time streamlit reruns the script
@@ -102,6 +105,12 @@ def main():
             help="A stochastic decoding method where the model considers the cumulative probability of the most likely tokens.",
         )
 
+        use_you_tube = st.toggle("Use YouTube", False)
+        if use_you_tube:
+            st.session_state.use_you_tube = True
+        else:
+            st.session_state.use_you_tube = False
+
         if st.button("Clear Chat"):
             st.session_state.messages = [
                 {
@@ -129,15 +138,9 @@ def main():
                     st.markdown(prompt)
 
                 # check if the prompt contains a youtube link and user asked something related to the video
-                # matching_string = prompt.lower()
                 prompt_modified_list = None
-                # if (
-                #     "youtube" in matching_string
-                #     and ".com" in matching_string
-                #     or "youtu.be" in matching_string
-                # ):
-                if filter_links(prompt):
-                    with st.spinner("Seeing the YouTube video..."):
+                if filter_links(prompt) and st.session_state.use_you_tube:
+                    with st.spinner("Seeing the YouTube video/shorts..."):
                         prompt_modified_list = prepare_prompt(prompt)
                         if (
                             prompt_modified_list

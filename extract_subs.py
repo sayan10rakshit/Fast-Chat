@@ -34,28 +34,30 @@ def filter_links(text: str) -> list[str]:
     Returns:
         str: The filtered text without the YouTube video links.
     """
-    pattern = r"((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu\.be))(\/(?:[\w\-]+\?v=|embed\/|live\/|v\/)?)([\w\-]+)(\S+)?"
+
+    pattern = "(https:\\/\\/)?(www\\.|m\\.)?(youtube\\.com\\/|youtu.be\\/)(watch\\?v\\=|shorts\\/)?([a-zA-Z0-9\\-\\_\\?\\=]{1,11})(\\s+)?"
     all_links = re.findall(pattern, text)
     if not all_links:
         return []
-    all_correct_links = []
-    for link in all_links:
-        (
-            _,  # protocol
-            _,  # subdomain
-            domain,
-            _,  # path
-            video_id,
-            query,
-            extra,
-        ) = link
-        if (domain and video_id and query) and (domain and query and extra):
-            correct_link = "".join(link)
-            correct_link = (
-                correct_link[:-1] if correct_link.endswith(".") else correct_link
-            )
-            all_correct_links.append(correct_link)
-    return all_correct_links
+    # remove duplicate entries from all_links which have the same 5th element
+    final_links = []
+    while all_links:
+        link = all_links.pop()
+        # (
+        #     protocol,     idx: 0 eg: https://
+        #     subdomain,    idx: 1 eg: www. or m.
+        #     domain,       idx: 2 eg: youtube.com or youtu.be
+        #     path,         idx: 3 eg: watch?v= or shorts/
+        #     video_id,     idx: 4 eg: aFgJh1Kk6jg
+        #     _ignore,      idx: 5 eg: any blank space
+        # ) = link
+
+        # Check if the video_id is not already present in the final_links and the video_id is not empty
+        # Also check if the domain is there in the link
+        if (link[4] not in [l[4] for l in all_links]) and link[2]:
+            video_type = "shorts" if "shorts" in link[3] else "video"
+            final_links.append(("".join(link), video_type))
+    return final_links
 
 
 def prepare_prompt(raw_text: str) -> str:
@@ -71,22 +73,22 @@ def prepare_prompt(raw_text: str) -> str:
     youtube_links = filter_links(raw_text)
     if not youtube_links:
         return None
-    prompt = ""
 
+    prompt = ""
     try:
-        for idx, link in enumerate(youtube_links):
+        for idx, (link, video_type) in enumerate(youtube_links):
             yt = pytube.YouTube(link)
             transcript_obj = YouTubeTranscriptApi()
             try:
                 transcript = transcript_obj.get_transcript(
                     yt.video_id, languages=["en"]
                 )
-                prompt += f"<helper_message{idx+1}> Here is the script of YouTube video no {idx+1}.\n"
+                prompt += f"<helper_message{idx+1}> Here is the script of YouTube {video_type} no {idx+1}.\n"
                 body = " ".join(text["text"] for text in transcript)
                 prompt += body + f"\n</helper_message{idx+1}>\n"
             except Exception:
                 prompt += f"<helper_message{idx+1}> ERROR Read the message below to respond {idx+1}.\n"
-                body = "Error: Unable to extract subtitles from the video. Hence just respond that either subtitles are disables or this video do not exist anymore"
+                body = f"Error: Unable to extract subtitles from the {video_type}. Hence just respond that either subtitles are disabled or this {video_type} do not exist anymore"
                 prompt += body + f"\n</helper_message{idx+1}>\n"
 
         prompt_list = make_batches(prompt, 5000)
