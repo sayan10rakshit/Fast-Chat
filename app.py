@@ -105,11 +105,7 @@ def main():
             help="A stochastic decoding method where the model considers the cumulative probability of the most likely tokens.",
         )
 
-        use_you_tube = st.toggle("Use YouTube", False)
-        if use_you_tube:
-            st.session_state.use_you_tube = True
-        else:
-            st.session_state.use_you_tube = False
+        st.session_state.use_you_tube = st.toggle("Use YouTube", False)
 
         if st.button("Clear Chat"):
             st.session_state.messages = [
