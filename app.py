@@ -14,9 +14,10 @@ def main():
     )
 
     # rest of your code
-    RESPONSE = "Sorry, that's on me.\nDue to limited hardware resources in \
+    GENERIC_RESPONSE = "Sorry, that's on me.\nDue to limited hardware resources in \
                                 the free tier, I can't respond to this query.\nPlease try again later or \
-                                    upgrade to a paid plan to get more hard"
+                                    upgrade to a paid plan to get more hard.\n\
+                                        Let's start afresh shall we? 😁"
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -75,7 +76,7 @@ def main():
         model = st.selectbox(
             "Select Model",
             ["mixtral-8x7b-32768", "gemma-7b-it", "llama3-70b-8192", "llama3-8b-8192"],
-            index=2,
+            index=3,
         )
 
         temperature = st.slider(
@@ -135,7 +136,8 @@ def main():
 
                 # check if the prompt contains a youtube link and user asked something related to the video
                 prompt_modified_list = None
-                if filter_links(prompt) and st.session_state.use_you_tube:
+                all_links = filter_links(prompt)
+                if all_links and st.session_state.use_you_tube:
                     with st.spinner("Seeing the YouTube video/shorts..."):
                         prompt_modified_list = prepare_prompt(prompt)
                         if (
@@ -189,7 +191,16 @@ def main():
                             )
 
                             st.write(model_output)
-                        except groq.RateLimitError:
+
+                            # Display the YouTube video/shorts after the response
+                            col1, _ = st.columns([0.7, 0.3])
+                            if all_links:
+                                with col1:
+                                    for video_link, _ in all_links:
+                                        st.video(video_link, start_time=0)
+
+                        except groq.RateLimitError as e:
+                            print(e)
                             if (
                                 prompt_modified_list
                                 and st.session_state.remove_unnecessary_messages
@@ -198,9 +209,9 @@ def main():
                                     st.session_state.messages.pop()
                                 st.session_state.remove_unnecessary_messages = False
                             st.session_state.messages.append(
-                                {"role": "assistant", "content": RESPONSE}
+                                {"role": "assistant", "content": GENERIC_RESPONSE}
                             )
-                            st.write(RESPONSE)
+                            st.write(GENERIC_RESPONSE)
 
             except groq.AuthenticationError:
                 st.error("Invalid API key.")
@@ -210,19 +221,22 @@ def main():
                     st.session_state.page_reload_count
                 )  # Display the welcome message again
 
-            except groq.BadRequestError:
+            except groq.BadRequestError as e:
+                print(e)
                 with st.chat_message("assistant"):
-                    st.write(RESPONSE + "\nLet's start afresh shall we? 😁")
+                    st.write(GENERIC_RESPONSE)
                     del st.session_state.messages
 
-            except groq.InternalServerError:
+            except groq.InternalServerError as e:
+                print(e)
                 with st.chat_message("assistant"):
-                    st.write(RESPONSE + "\nLet's start afresh shall we? 😁")
+                    st.write(GENERIC_RESPONSE)
                     del st.session_state.messages
 
-            except Exception:
+            except Exception as e:
+                print("Last exception: ", e)
                 with st.chat_message("assistant"):
-                    st.write(RESPONSE + "\nLet's start afresh shall we? 😁")
+                    st.write(GENERIC_RESPONSE)
                     del st.session_state.messages
 
 
