@@ -24,7 +24,7 @@ Try it out now: [https://fast-chat.streamlit.app](https://fast-chat.streamlit.ap
 ### Installation
 
 1. Clone the repository
-2. Install the required Python packages using pipenv:
+2. Install the required dependencies using pipenv:
 
 ```sh
 pipenv install
