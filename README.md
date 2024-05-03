@@ -1,6 +1,6 @@
 # Fast-Chat⚡
 
-Fast-Chat is a blazing fast chat experience powered by the GROQ's Language Processing Unit ([GROQ LPU^TM^](https://wow.groq.com/why-groq/)). Chat with Fast-Chat and get instant responses to your queries.
+Fast-Chat is a blazing fast chat experience powered by the GROQ's Language Processing Unit ([GROQ LPU<sup>TM</sup>](https://wow.groq.com/why-groq/)). Chat with Fast-Chat and get instant responses to your queries.
 
 Try it out now: [https://fast-chat.streamlit.app](https://fast-chat.streamlit.app/)
 
