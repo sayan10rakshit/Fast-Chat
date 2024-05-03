@@ -193,7 +193,7 @@ def main():
                             st.write(model_output)
 
                             # Display the YouTube video/shorts after the response
-                            col1, _ = st.columns([0.7, 0.3])
+                            col1, _ = st.columns([0.5, 0.5])
                             if all_links:
                                 with col1:
                                     for video_link, _ in all_links:
