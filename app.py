@@ -199,8 +199,7 @@ def main():
                                     for video_link, _ in all_links:
                                         st.video(video_link, start_time=0)
 
-                        except groq.RateLimitError as e:
-                            print(e)
+                        except groq.RateLimitError:
                             if (
                                 prompt_modified_list
                                 and st.session_state.remove_unnecessary_messages
@@ -221,20 +220,17 @@ def main():
                     st.session_state.page_reload_count
                 )  # Display the welcome message again
 
-            except groq.BadRequestError as e:
-                print(e)
+            except groq.BadRequestError:
                 with st.chat_message("assistant"):
                     st.write(GENERIC_RESPONSE)
                     del st.session_state.messages
 
-            except groq.InternalServerError as e:
-                print(e)
+            except groq.InternalServerError:
                 with st.chat_message("assistant"):
                     st.write(GENERIC_RESPONSE)
                     del st.session_state.messages
 
-            except Exception as e:
-                print("Last exception: ", e)
+            except Exception:
                 with st.chat_message("assistant"):
                     st.write(GENERIC_RESPONSE)
                     del st.session_state.messages
