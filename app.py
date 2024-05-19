@@ -4,6 +4,15 @@ import groq
 from groq import Groq
 import streamlit as st
 from extract_subs import prepare_prompt, filter_links
+from get_web_results import search_the_web, REGIONS
+
+
+# Define a function to handle the toggling logic
+def handle_toggle(toggle_name):
+    if toggle_name == "use_you_tube":
+        st.session_state.search_the_web = False
+    elif toggle_name == "search_the_web":
+        st.session_state.use_you_tube = False
 
 
 def main():
@@ -51,6 +60,9 @@ def main():
 
     if "use_you_tube" not in st.session_state:
         st.session_state.use_you_tube = False
+
+    if "search_the_web" not in st.session_state:
+        st.session_state.search_the_web = False
 
     st.session_state.page_reload_count += (
         1  # will be incremented each time streamlit reruns the script
@@ -106,7 +118,29 @@ def main():
             help="A stochastic decoding method where the model considers the cumulative probability of the most likely tokens.",
         )
 
-        st.session_state.use_you_tube = st.toggle("Use YouTube", False)
+        st.toggle(
+            "Use YouTube",
+            st.session_state.use_you_tube,
+            key="use_you_tube",
+            on_change=handle_toggle,
+            args=("use_you_tube",),
+        )
+
+        st.toggle(
+            "Search the Web",
+            st.session_state.search_the_web,
+            key="search_the_web",
+            on_change=handle_toggle,
+            args=("search_the_web",),
+        )
+
+        if st.session_state.search_the_web:
+            region = st.selectbox(
+                "Select Region",
+                REGIONS,
+                index=25,
+                help="Select the region to get the search results from.",
+            )
 
         if st.button("Clear Chat"):
             st.session_state.messages = [
@@ -136,8 +170,8 @@ def main():
 
                 # check if the prompt contains a youtube link and user asked something related to the video
                 prompt_modified_list = None
-                all_links = filter_links(prompt)
-                if all_links and st.session_state.use_you_tube:
+                all_yt_links = filter_links(prompt)
+                if all_yt_links and st.session_state.use_you_tube:
                     with st.spinner("Seeing the YouTube video/shorts..."):
                         prompt_modified_list = prepare_prompt(prompt)
                         if (
@@ -159,6 +193,19 @@ def main():
                         "Gotcha! Let me think...",
                     ]
                 )
+
+                if st.session_state.search_the_web:
+                    with st.spinner("Searching the web..."):
+                        BODY, img_links, video_links, MARKDOWN_PLACEHOLDER = (
+                            search_the_web(prompt, max_results=3, region=region)
+                        )
+
+                        if BODY:
+                            st.session_state.remove_unnecessary_messages = True
+                            st.session_state.messages.append(
+                                {"role": "user", "content": BODY}
+                            )
+
                 # Display assistant response in chat message container
                 with st.spinner(spinner_message):
                     with st.chat_message("assistant"):
@@ -181,6 +228,13 @@ def main():
                                 for _ in range(len(prompt_modified_list)):
                                     st.session_state.messages.pop()
                                 st.session_state.remove_unnecessary_messages = False
+                            elif (
+                                st.session_state.search_the_web
+                                and st.session_state.remove_unnecessary_messages
+                            ):
+                                # If search results were displayed, then remove the search results from the chat history
+                                st.session_state.messages.pop()
+                                st.session_state.remove_unnecessary_messages = False
 
                             # Add assistant response to chat history
                             st.session_state.messages.append(
@@ -192,12 +246,36 @@ def main():
 
                             st.write(model_output)
 
+                            # ? YOUTUBE VIDEO/SHORTS RESULTS after model response
                             # Display the YouTube video/shorts after the response
                             col1, _ = st.columns([0.5, 0.5])
-                            if all_links:
+                            if (
+                                all_yt_links
+                                and st.session_state.use_you_tube
+                                and all_yt_links[0][1]
+                                == "video"  # if the YT content is a shorts, don't display it
+                            ):
                                 with col1:
-                                    for video_link, _ in all_links:
+                                    for video_link, _ in all_yt_links:
                                         st.video(video_link, start_time=0)
+
+                            # ? WEB SEARCH RESULTS after model response
+                            # Display the web search references after the response
+                            elif st.session_state.search_the_web:
+                                col1, col2, col3 = st.columns(3)
+                                with col1:
+                                    st.image(img_links[0], use_column_width="auto")
+                                with col2:
+                                    st.image(img_links[1], use_column_width="auto")
+                                with col3:
+                                    st.image(img_links[2], use_column_width="auto")
+                            if video_links:
+                                col1, _ = st.columns([0.5, 0.5])
+                                with col1:
+                                    for video_link, _ in video_links:
+                                        st.video(video_link, start_time=0)
+                            st.caption("Sources from the web")
+                            st.markdown(MARKDOWN_PLACEHOLDER)
 
                         except groq.RateLimitError:
                             if (
