@@ -88,7 +88,7 @@ def main():
         model = st.selectbox(
             "Select Model",
             ["mixtral-8x7b-32768", "gemma-7b-it", "llama3-70b-8192", "llama3-8b-8192"],
-            index=3,
+            index=2,
         )
 
         temperature = st.slider(
@@ -140,6 +140,14 @@ def main():
                 REGIONS,
                 index=25,
                 help="Select the region to get the search results from.",
+            )
+
+            max_results = st.slider(
+                "Max search results to refer",
+                3,
+                15,
+                10,
+                help="More results might take longer to process but will provide more context.",
             )
 
         if st.button("Clear Chat"):
@@ -197,7 +205,12 @@ def main():
                 if st.session_state.search_the_web:
                     with st.spinner("Searching the web..."):
                         BODY, img_links, video_links, MARKDOWN_PLACEHOLDER = (
-                            search_the_web(prompt, max_results=3, region=region)
+                            search_the_web(
+                                prompt,
+                                max_results=max_results,
+                                region=region,
+                                api_key=st.session_state.api_key,
+                            )
                         )
 
                         if BODY:
@@ -252,7 +265,9 @@ def main():
                             if (
                                 all_yt_links
                                 and st.session_state.use_you_tube
-                                and all_yt_links[0][1]
+                                and all_yt_links[0][
+                                    1
+                                ]  # stored as (link, type) in the list, type is either "video" or "shorts"
                                 == "video"  # if the YT content is a shorts, don't display it
                             ):
                                 with col1:
@@ -262,20 +277,24 @@ def main():
                             # ? WEB SEARCH RESULTS after model response
                             # Display the web search references after the response
                             elif st.session_state.search_the_web:
-                                col1, col2, col3 = st.columns(3)
-                                with col1:
-                                    st.image(img_links[0], use_column_width="auto")
-                                with col2:
-                                    st.image(img_links[1], use_column_width="auto")
-                                with col3:
-                                    st.image(img_links[2], use_column_width="auto")
-                            if video_links:
-                                col1, _ = st.columns([0.5, 0.5])
-                                with col1:
-                                    for video_link, _ in video_links:
-                                        st.video(video_link, start_time=0)
-                            st.caption("Sources from the web")
-                            st.markdown(MARKDOWN_PLACEHOLDER)
+                                # ? Display the images
+                                cols = st.columns(3)
+                                if img_links:
+                                    for idx, img_link in enumerate(
+                                        img_links[0:6]
+                                    ):  # only show 6 images
+                                        with cols[idx % 3]:
+                                            st.image(img_link, use_column_width="auto")
+
+                                # ? Display the videos
+                                cols = st.columns(2)
+                                if video_links:
+                                    st.caption("Videos from the web")
+                                    for idx, (video_link, _) in enumerate(video_links):
+                                        with cols[idx % 2]:
+                                            st.video(video_link, start_time=0)
+                                with st.expander("Sources from the web"):
+                                    st.markdown(MARKDOWN_PLACEHOLDER)
 
                         except groq.RateLimitError:
                             if (
@@ -285,10 +304,12 @@ def main():
                                 for _ in range(len(prompt_modified_list)):
                                     st.session_state.messages.pop()
                                 st.session_state.remove_unnecessary_messages = False
+                            st.session_state.messages = []
                             st.session_state.messages.append(
                                 {"role": "assistant", "content": GENERIC_RESPONSE}
                             )
                             st.write(GENERIC_RESPONSE)
+                            print("Rate limit error")
 
             except groq.AuthenticationError:
                 st.error("Invalid API key.")
@@ -297,18 +318,21 @@ def main():
                 del (
                     st.session_state.page_reload_count
                 )  # Display the welcome message again
+                print("Invalid API key")
 
             except groq.BadRequestError:
                 with st.chat_message("assistant"):
                     st.write(GENERIC_RESPONSE)
                     del st.session_state.messages
+                print("Bad request error")
 
             except groq.InternalServerError:
                 with st.chat_message("assistant"):
                     st.write(GENERIC_RESPONSE)
                     del st.session_state.messages
+                print("Internal server error")
 
-            except Exception:
+            except Exception as e:
                 with st.chat_message("assistant"):
                     st.write(GENERIC_RESPONSE)
                     del st.session_state.messages

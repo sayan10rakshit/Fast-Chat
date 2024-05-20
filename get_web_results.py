@@ -1,6 +1,8 @@
 # import streamlit as st
 from duckduckgo_search import DDGS
 from extract_subs import filter_links
+import time
+from groq import Groq
 
 REGIONS = {
     "Arabia": "xa-ar",
@@ -72,18 +74,39 @@ REGIONS = {
     "Vietnam": "vn-vi",
     "No region": "wt-wt",
 }
-# MAX_RESULTS = 3
 
-# query = "give me info about peter cat kolkata"
+def search_the_web(user_query, max_results=3, region="ie-en", api_key=None):
+    if user_query:
+        # SEARCH_PROMPT = f"""
+        # <instructions>Given the following search query, give me a good effective search text to search the web. Just respond with one brief text.</instructions>\n
+        # <user_query>{user_query}</user_query>
+        # """
 
-# query = st.text_area(
-#     "Enter your query:",
-#     placeholder="give me info about peter cat kolkata",
-# )
+        # messages = [
+        #     {"role": "user", "content": SEARCH_PROMPT},
+        # ]
+        # try:
+        #     client2 = Groq(
+        #         api_key = # ! give a separate api key, then uncomment this line
+        #     )
+        #     chat_completion = client2.chat.completions.create(
+        #         model="llama3-70b-8192",
+        #         messages=messages,
+        #         temperature=1,
+        #         max_tokens=100,
+        #         top_p=0.9,
+        #     )
 
+        #     query = chat_completion.choices[0].message.content or user_query
+        #     print(query)
 
-def search_the_web(query, max_results=3, region="ie-en"):
-    if query:
+        # except Exception as e:
+        #     print(e)
+        #     print("Error")
+        #     query = user_query
+
+        query = user_query
+
         results = DDGS().text(query, region=region, max_results=max_results)
 
         img_results = DDGS().images(
@@ -100,34 +123,35 @@ def search_the_web(query, max_results=3, region="ie-en"):
 
         video_links = []
         img_links = []
-        MARKDOWN_PLACEHOLDER = """"""
-        BODY = """<instructions>Refer these results from the web and respond to the user: </instructions>\n"""
+        markdown_placeholder = """"""
+        body = """<instructions>Refer these results from the web and respond to the user: </instructions>\n"""
 
-        for idx in range(max_results):
+        if results:
+            for idx, search_result in enumerate(results):
 
-            BODY += f"<result{idx}>\n{results[idx]['body']}\n</result{idx}>\n"
+                body += f"<result {idx}>\n{search_result['body']}\n</result {idx}>\n"
 
-            link_from_search = filter_links(results[idx]["href"])
-            link_from_img_search = filter_links(img_results[idx]["url"])
+                video_links_from_search = filter_links(search_result["href"])
 
-            if not link_from_search:
-                MARKDOWN_PLACEHOLDER += f"- {results[idx]['href']}\n"
-            else:
-                video_links.extend(link_from_search)
+                if not video_links_from_search:
+                    markdown_placeholder += f"- {search_result['href']}\n"
+                else:
+                    video_links.extend(video_links_from_search)
 
-            if not link_from_img_search:
-                MARKDOWN_PLACEHOLDER += f"- {img_results[idx]['url']}\n"
-            else:
-                video_links.extend(link_from_img_search)
+        if img_results:
+            for idx, image_result in enumerate(img_results):
+                video_links_from_img_search = filter_links(image_result["url"])
+                if not video_links_from_img_search:
+                    markdown_placeholder += f"- {image_result['url']}\n"
+                else:
+                    video_links.extend(video_links_from_img_search)
+                img_links.append(image_result["image"])
 
-            img_links.append(img_results[idx]["image"])
-
-        BODY += """\n<instructions>The above results might contain irrelevant information. Determine the relevance of the information and respond to the user accordingly.
+        body += """\n<instructions>The above results might contain irrelevant information. Determine the relevance of the information and respond to the user accordingly.
                 Do not include the text within brackets in your response. </instructions>"""
 
-        return BODY, img_links, video_links, MARKDOWN_PLACEHOLDER
+        # Remove duplicates
+        img_links = list(set(img_links))
+        video_links = list(set(video_links))
 
-
-# BODY, img_links, video_links, MARKDOWN_PLACEHOLDER = search_the_web(
-#     "give me info about peter cat kolkata", max_results=3, region="ie-en"
-# )
+        return body, img_links, video_links, markdown_placeholder
