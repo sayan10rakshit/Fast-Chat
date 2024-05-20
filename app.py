@@ -209,7 +209,7 @@ def main():
                                 prompt,
                                 max_results=max_results,
                                 region=region,
-                                api_key=st.session_state.api_key,
+                                # api_key=st.session_state.api_key, #! give a separate api key for a separate client
                             )
                         )
 
