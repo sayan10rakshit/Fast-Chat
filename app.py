@@ -68,6 +68,11 @@ def main():
         1  # will be incremented each time streamlit reruns the script
     )
 
+    if "special_message" not in st.session_state:
+        st.session_state.special_message = None
+    if "special_message_shown" not in st.session_state:
+        st.session_state.special_message_shown = False
+
     st.markdown("# Fast Chat ⚡")
 
     for message in st.session_state.messages:
@@ -144,11 +149,18 @@ def main():
 
             max_results = st.slider(
                 "Max search results to refer",
-                3,
-                15,
                 10,
+                30,
+                12,
                 help="More results might take longer to process but will provide more context.",
             )
+
+            if max_results >= 20 and model == "llama3-70b-8192":
+                st.session_state.special_message = """
+                Although llama3-70b-8192 is the most powerful model, you might get slow responses.\n
+                It is recommended to use other models or to reduce the max search results.\n
+                mixtral-8x7b-32768 is faster and can handle more tokens.
+                """
 
         if st.button("Clear Chat"):
             st.session_state.messages = [
@@ -160,6 +172,11 @@ def main():
             st.session_state.remove_unnecessary_messages = False
             # reload the page to display the welcome message
             st.rerun()
+
+    if st.session_state.special_message and not st.session_state.special_message_shown:
+        st.warning(st.session_state.special_message)
+        st.session_state.special_message = None
+        st.session_state.special_message_shown = True
 
     if prompt := st.chat_input("Ask me anything!"):
         # Add user message to chat history
@@ -209,7 +226,7 @@ def main():
                                 prompt,
                                 max_results=max_results,
                                 region=region,
-                                # api_key=st.session_state.api_key, #! give a separate api key for a separate client
+                                # api_key=<some_api_key>, #! give a separate api key to use a different agent for the web search prompt
                             )
                         )
 
@@ -278,23 +295,63 @@ def main():
                             # Display the web search references after the response
                             elif st.session_state.search_the_web:
                                 # ? Display the images
-                                cols = st.columns(3)
+
                                 if img_links:
+                                    st.caption("**Images from the web**")
+                                    cols = st.columns(3)
+                                    pics_to_show = (
+                                        3 if len(img_links) > 3 else len(img_links)
+                                    )
+
+                                    # Show the initial set of images
                                     for idx, img_link in enumerate(
-                                        img_links[0:6]
-                                    ):  # only show 6 images
+                                        img_links[:pics_to_show]
+                                    ):
                                         with cols[idx % 3]:
                                             st.image(img_link, use_column_width="auto")
 
+                                    # Show additional images under the expander if there are any
+                                    if len(img_links) > pics_to_show:
+                                        with st.expander("View more images"):
+                                            more_cols = st.columns(3)
+                                            for idx, img_link in enumerate(
+                                                img_links[pics_to_show:]
+                                            ):
+                                                with more_cols[idx % 3]:
+                                                    st.image(
+                                                        img_link,
+                                                        use_column_width="auto",
+                                                    )
+
                                 # ? Display the videos
-                                cols = st.columns(2)
                                 if video_links:
-                                    st.caption("Videos from the web")
-                                    for idx, (video_link, _) in enumerate(video_links):
+                                    st.caption("**Videos from the web**")
+                                    cols = st.columns(2)
+                                    # if video_links:
+                                    videos_to_show = (
+                                        2 if len(video_links) > 2 else len(video_links)
+                                    )
+                                    for idx, (video_link, _) in enumerate(
+                                        video_links[:videos_to_show]
+                                    ):
                                         with cols[idx % 2]:
                                             st.video(video_link, start_time=0)
+                                    # Show additional videos under the expander if there are any
+                                    if len(video_links) > videos_to_show:
+                                        with st.expander("View more videos"):
+                                            more_cols = st.columns(2)
+                                            for idx, (video_link, _) in enumerate(
+                                                video_links[videos_to_show:]
+                                            ):
+                                                with more_cols[idx % 2]:
+                                                    st.video(video_link, start_time=0)
+
                                 with st.expander("Sources from the web"):
                                     st.markdown(MARKDOWN_PLACEHOLDER)
+                                st.info(
+                                    "**Fast Chat ocassionally gives misleading results. Kindly verify the information from reliable sources.**",
+                                    icon="ℹ️",
+                                )
 
                         except groq.RateLimitError:
                             if (

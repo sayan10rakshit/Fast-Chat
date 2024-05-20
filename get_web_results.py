@@ -75,8 +75,10 @@ REGIONS = {
     "No region": "wt-wt",
 }
 
+
 def search_the_web(user_query, max_results=3, region="ie-en", api_key=None):
     if user_query:
+        """Uncomment the code below to use a different agent for the search prompt."""
         # SEARCH_PROMPT = f"""
         # <instructions>Given the following search query, give me a good effective search text to search the web. Just respond with one brief text.</instructions>\n
         # <user_query>{user_query}</user_query>
@@ -86,9 +88,7 @@ def search_the_web(user_query, max_results=3, region="ie-en", api_key=None):
         #     {"role": "user", "content": SEARCH_PROMPT},
         # ]
         # try:
-        #     client2 = Groq(
-        #         api_key = # ! give a separate api key, then uncomment this line
-        #     )
+        #     client2 = Groq(api_key=api_key)
         #     chat_completion = client2.chat.completions.create(
         #         model="llama3-70b-8192",
         #         messages=messages,
@@ -104,6 +104,7 @@ def search_the_web(user_query, max_results=3, region="ie-en", api_key=None):
         #     print(e)
         #     print("Error")
         #     query = user_query
+        """End of code to use a different agent for the search prompt."""
 
         query = user_query
 
