@@ -15,18 +15,13 @@ def handle_toggle(toggle_name):
         st.session_state.use_you_tube = False
 
 
-def main():
-    st.set_page_config(
-        page_title="Fast Chat",
-        page_icon="⚡",
-        layout="wide",
-    )
-
-    # rest of your code
-    GENERIC_RESPONSE = "Sorry, that's on me.\nDue to limited hardware resources in \
-                                the free tier, I can't respond to this query.\nPlease try again later or \
-                                    upgrade to a paid plan to get more hard.\n\
-                                        Let's start afresh shall we? 😁"
+def sidebar():
+    model = None
+    temperature = None
+    max_tokens = None
+    top_p = None
+    region = None
+    max_results = None
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -178,7 +173,37 @@ def main():
         st.session_state.special_message = None
         st.session_state.special_message_shown = True
 
-    if prompt := st.chat_input("Ask me anything!"):
+    return (
+        model,
+        temperature,
+        max_tokens,
+        top_p,
+        region,
+        max_results,
+    )
+
+
+def body(
+    prompt=None,
+    model=None,
+    temperature=None,
+    max_tokens=None,
+    top_p=None,
+    region=None,
+    max_results=None,
+):
+
+    GENERIC_RESPONSE = "Sorry, that's on me.\nDue to limited hardware resources in \
+                                the free tier, I can't respond to this query.\nPlease try again later or \
+                                    upgrade to a paid plan to get more hard.\n\
+                                        Let's start afresh shall we? 😁"
+
+    all_yt_links = None
+    img_links = None
+    video_links = None
+    MARKDOWN_PLACEHOLDER = None
+
+    if prompt:
         # Add user message to chat history
         if st.session_state.api_key == "":
 
@@ -276,83 +301,6 @@ def main():
 
                             st.write(model_output)
 
-                            # ? YOUTUBE VIDEO/SHORTS RESULTS after model response
-                            # Display the YouTube video/shorts after the response
-                            col1, _ = st.columns([0.5, 0.5])
-                            if (
-                                all_yt_links
-                                and st.session_state.use_you_tube
-                                and all_yt_links[0][
-                                    1
-                                ]  # stored as (link, type) in the list, type is either "video" or "shorts"
-                                == "video"  # if the YT content is a shorts, don't display it
-                            ):
-                                with col1:
-                                    for video_link, _ in all_yt_links:
-                                        st.video(video_link, start_time=0)
-
-                            # ? WEB SEARCH RESULTS after model response
-                            # Display the web search references after the response
-                            elif st.session_state.search_the_web:
-                                # ? Display the images
-
-                                if img_links:
-                                    st.caption("**Images from the web**")
-                                    cols = st.columns(3)
-                                    pics_to_show = (
-                                        3 if len(img_links) > 3 else len(img_links)
-                                    )
-
-                                    # Show the initial set of images
-                                    for idx, img_link in enumerate(
-                                        img_links[:pics_to_show]
-                                    ):
-                                        with cols[idx % 3]:
-                                            st.image(img_link, use_column_width="auto")
-
-                                    # Show additional images under the expander if there are any
-                                    if len(img_links) > pics_to_show:
-                                        with st.expander("View more images"):
-                                            more_cols = st.columns(3)
-                                            for idx, img_link in enumerate(
-                                                img_links[pics_to_show:]
-                                            ):
-                                                with more_cols[idx % 3]:
-                                                    st.image(
-                                                        img_link,
-                                                        use_column_width="auto",
-                                                    )
-
-                                # ? Display the videos
-                                if video_links:
-                                    st.caption("**Videos from the web**")
-                                    cols = st.columns(2)
-                                    # if video_links:
-                                    videos_to_show = (
-                                        2 if len(video_links) > 2 else len(video_links)
-                                    )
-                                    for idx, (video_link, _) in enumerate(
-                                        video_links[:videos_to_show]
-                                    ):
-                                        with cols[idx % 2]:
-                                            st.video(video_link, start_time=0)
-                                    # Show additional videos under the expander if there are any
-                                    if len(video_links) > videos_to_show:
-                                        with st.expander("View more videos"):
-                                            more_cols = st.columns(2)
-                                            for idx, (video_link, _) in enumerate(
-                                                video_links[videos_to_show:]
-                                            ):
-                                                with more_cols[idx % 2]:
-                                                    st.video(video_link, start_time=0)
-
-                                with st.expander("Sources from the web"):
-                                    st.markdown(MARKDOWN_PLACEHOLDER)
-                                st.info(
-                                    "**Fast Chat ocassionally gives misleading results. Kindly verify the information from reliable sources.**",
-                                    icon="ℹ️",
-                                )
-
                         except groq.RateLimitError:
                             if (
                                 prompt_modified_list
@@ -394,6 +342,103 @@ def main():
                     st.write(GENERIC_RESPONSE)
                     del st.session_state.messages
 
+    return all_yt_links, img_links, video_links, MARKDOWN_PLACEHOLDER
+
+
+def show_media(
+    all_yt_links=None,
+    img_links=None,
+    video_links=None,
+    MARKDOWN_PLACEHOLDER=None,
+):
+    # ? YOUTUBE VIDEO/SHORTS RESULTS after model response
+    # Display the YouTube video/shorts after the response
+    if (
+        all_yt_links
+        and st.session_state.use_you_tube
+        and all_yt_links[0][
+            1
+        ]  # stored as (link, type) in the list, type is either "video" or "shorts"
+        == "video"  # if the YT content is a shorts, don't display it
+    ):
+        for video_link, _ in all_yt_links:
+            st.video(video_link, start_time=0)
+
+    # ? WEB SEARCH RESULTS after model response
+    # Display the web search references after the response
+    elif st.session_state.search_the_web:
+        # ? Display the images
+
+        if img_links:
+            st.caption("**Images from the web**")
+            cols_img = st.columns(3)
+            pics_to_show = 3 if len(img_links) > 3 else len(img_links)
+
+            # Show the initial set of images
+            for idx, img_link in enumerate(img_links[:pics_to_show]):
+                with cols_img[idx % 3]:
+                    st.image(img_link, use_column_width="auto")
+
+            # Show additional images under the expander if there are any
+            if len(img_links) > pics_to_show:
+                with st.expander("View more images"):
+                    more_cols = st.columns(3)
+                    for idx, img_link in enumerate(img_links[pics_to_show:]):
+                        with more_cols[idx % 3]:
+                            st.image(
+                                img_link,
+                                use_column_width="auto",
+                            )
+
+        # ? Display the videos
+        if video_links:
+            st.caption("**Videos from the web**")
+            cols_vids = st.columns(2)
+            # if video_links:
+            videos_to_show = 2 if len(video_links) > 2 else len(video_links)
+            for idx, (video_link, _) in enumerate(video_links[:videos_to_show]):
+                with cols_vids[idx % 2]:
+                    st.video(video_link, start_time=0)
+            # Show additional videos under the expander if there are any
+            if len(video_links) > videos_to_show:
+                with st.expander("View more videos"):
+                    more_cols = st.columns(2)
+                    for idx, (video_link, _) in enumerate(video_links[videos_to_show:]):
+                        with more_cols[idx % 2]:
+                            st.video(video_link, start_time=0)
+
+        with st.expander("Sources from the web"):
+            st.markdown(MARKDOWN_PLACEHOLDER)
+
 
 if __name__ == "__main__":
-    main()
+    st.set_page_config(
+        page_title="Fast Chat",
+        page_icon="⚡",
+        layout="wide",
+    )
+
+    all_yt_links = None
+    img_links = None
+    video_links = None
+    MARKDOWN_PLACEHOLDER = None
+
+    sidebar_values = sidebar()
+
+    current_prompt = st.chat_input("Ask me anything!")
+
+    if current_prompt:
+        main_cols = st.columns([0.6, 0.4])
+        with main_cols[0]:
+            all_yt_links, img_links, video_links, MARKDOWN_PLACEHOLDER = body(
+                current_prompt,
+                *sidebar_values,
+            )
+        with main_cols[1]:
+            show_media(all_yt_links, img_links, video_links, MARKDOWN_PLACEHOLDER)
+
+    if current_prompt:
+        st.info(
+            "**Fast Chat ocassionally gives misleading results. Kindly verify the information from reliable sources.**",
+            icon="ℹ️",
+        )
