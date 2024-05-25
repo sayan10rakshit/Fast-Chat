@@ -5,6 +5,8 @@ from groq import Groq
 import streamlit as st
 from extract_subs import prepare_prompt, filter_links
 from get_web_results import search_the_web, REGIONS
+from get_web_results_serp import get_web_results
+from get_location import find_closest_match
 
 
 # Define a function to handle the toggling logic
@@ -15,7 +17,7 @@ def handle_toggle(toggle_name):
         st.session_state.use_you_tube = False
 
 
-def sidebar():
+def sidebar_and_init():
     model = None
     temperature = None
     max_tokens = None
@@ -59,14 +61,31 @@ def sidebar():
     if "search_the_web" not in st.session_state:
         st.session_state.search_the_web = False
 
+    if "use_serp_api" not in st.session_state:
+        st.session_state.use_serp_api = False
+
+    if "serp_api_key" not in st.session_state:
+        st.session_state.serp_api_key = ""
+
+    if "serpapi_location" not in st.session_state:
+        st.session_state.serpapi_location = ""
+
+    if "old_user_serpapi_location" not in st.session_state:
+        st.session_state.old_user_serpapi_location = ""
+
     st.session_state.page_reload_count += (
         1  # will be incremented each time streamlit reruns the script
     )
 
     if "special_message" not in st.session_state:
-        st.session_state.special_message = None
+        st.session_state.special_message = ""
     if "special_message_shown" not in st.session_state:
         st.session_state.special_message_shown = False
+
+    if "special_message2" not in st.session_state:
+        st.session_state.special_message2 = ""
+    if "special_message2_shown" not in st.session_state:
+        st.session_state.special_message2_shown = False
 
     st.markdown("# Fast Chat ⚡")
 
@@ -150,6 +169,42 @@ def sidebar():
                 help="More results might take longer to process but will provide more context.",
             )
 
+            st.session_state.use_serp_api = st.toggle(
+                "Use SerpApi",
+                False,
+            )
+
+            # ? SerpApi Integration
+            if st.session_state.use_serp_api:
+                st.session_state.special_message2 = """
+                Although SerpApi gives more comprehensive search results, it might be slow.
+                """
+
+                serp_api_key = st.text_input(
+                    "SerpApi Key",
+                    type="password",
+                    help="Enter your SerpApi key to get more comprehensive search results.",
+                )
+                st.markdown(
+                    "[Get your FREE SerpApi key!](https://serpapi.com/manage-api-key)",
+                    help="""A very powerful API to get comprehensive search results from the web.""",
+                )
+                if serp_api_key != "":
+                    st.session_state.serp_api_key = serp_api_key
+                serpapi_location = st.text_input(
+                    "Enter location for SerpApi",
+                    "Kolkata, West Bengal, India",
+                    help="Enter the location to get the search results from.",
+                )
+                if (  # Only if the user has changed the location then only find the closest match
+                    serpapi_location
+                    and serpapi_location != st.session_state.old_user_serpapi_location
+                ):
+                    authentic_serpapi_location = find_closest_match(serpapi_location)
+                    st.success(f"Using location: {authentic_serpapi_location}")
+                    st.session_state.serpapi_location = authentic_serpapi_location
+                    st.session_state.old_user_serpapi_location = serpapi_location
+
             if max_results >= 20 and model == "llama3-70b-8192":
                 st.session_state.special_message = """
                 Although llama3-70b-8192 is the most powerful model, you might get slow responses.\n
@@ -168,10 +223,20 @@ def sidebar():
             # reload the page to display the welcome message
             st.rerun()
 
+    # ? Show if model is llama3-70b-8192 and max_results is greater than 20
     if st.session_state.special_message and not st.session_state.special_message_shown:
         st.warning(st.session_state.special_message)
-        st.session_state.special_message = None
+        st.session_state.special_message = ""
         st.session_state.special_message_shown = True
+
+    # ? Show if SerpApi is used
+    if (
+        st.session_state.special_message2
+        and not st.session_state.special_message2_shown
+    ):
+        st.warning(st.session_state.special_message2)
+        st.session_state.special_message2 = ""
+        st.session_state.special_message2_shown = True
 
     return (
         model,
@@ -246,14 +311,28 @@ def body(
 
                 if st.session_state.search_the_web:
                     with st.spinner("Searching the web..."):
-                        BODY, img_links, video_links, MARKDOWN_PLACEHOLDER = (
-                            search_the_web(
-                                prompt,
-                                max_results=max_results,
-                                region=region,
-                                # api_key=<some_api_key>, #! give a separate api key to use a different agent for the web search prompt
+                        if (  # ? SerpApi Integration
+                            st.session_state.use_serp_api
+                            and st.session_state.serp_api_key
+                            and st.session_state.serpapi_location
+                        ):
+                            BODY, img_links, video_links, MARKDOWN_PLACEHOLDER = (
+                                get_web_results(
+                                    api_key=st.session_state.serp_api_key,
+                                    query=prompt,
+                                    location=st.session_state.serpapi_location,
+                                    max_results=max_results,
+                                )
                             )
-                        )
+                        else:  # ? DDG Integration
+                            BODY, img_links, video_links, MARKDOWN_PLACEHOLDER = (
+                                search_the_web(
+                                    prompt,
+                                    max_results=max_results,
+                                    region=region,
+                                    # api_key=<some_api_key>, #! give a separate api key to use a different agent for the web search prompt
+                                )
+                            )
 
                         if BODY:
                             st.session_state.remove_unnecessary_messages = True
@@ -341,6 +420,7 @@ def body(
                 with st.chat_message("assistant"):
                     st.write(GENERIC_RESPONSE)
                     del st.session_state.messages
+                print(e)
 
     return all_yt_links, img_links, video_links, MARKDOWN_PLACEHOLDER
 
@@ -396,16 +476,35 @@ def show_media(
             cols_vids = st.columns(2)
             # if video_links:
             videos_to_show = 2 if len(video_links) > 2 else len(video_links)
-            for idx, (video_link, _) in enumerate(video_links[:videos_to_show]):
-                with cols_vids[idx % 2]:
-                    st.video(video_link, start_time=0)
-            # Show additional videos under the expander if there are any
-            if len(video_links) > videos_to_show:
-                with st.expander("View more videos"):
-                    more_cols = st.columns(2)
-                    for idx, (video_link, _) in enumerate(video_links[videos_to_show:]):
-                        with more_cols[idx % 2]:
-                            st.video(video_link, start_time=0)
+            # ? SerpApi Integration
+            if (
+                st.session_state.use_serp_api
+                and st.session_state.serp_api_key
+                and st.session_state.serpapi_location
+            ):
+                for idx, video_link in enumerate(video_links[:videos_to_show]):
+                    with cols_vids[idx % 2]:
+                        st.video(video_link, start_time=0)
+                if len(video_links) > videos_to_show:
+                    with st.expander("View more videos"):
+                        more_cols = st.columns(2)
+                        for idx, video_link in enumerate(video_links[videos_to_show:]):
+                            with more_cols[idx % 2]:
+                                st.video(video_link, start_time=0)
+            # ? DDG Integration
+            else:
+                for idx, (video_link, _) in enumerate(video_links[:videos_to_show]):
+                    with cols_vids[idx % 2]:
+                        st.video(video_link, start_time=0)
+                # Show additional videos under the expander if there are any
+                if len(video_links) > videos_to_show:
+                    with st.expander("View more videos"):
+                        more_cols = st.columns(2)
+                        for idx, (video_link, _) in enumerate(
+                            video_links[videos_to_show:]
+                        ):
+                            with more_cols[idx % 2]:
+                                st.video(video_link, start_time=0)
 
         with st.expander("Sources from the web"):
             st.markdown(MARKDOWN_PLACEHOLDER)
@@ -423,7 +522,7 @@ if __name__ == "__main__":
     video_links = None
     MARKDOWN_PLACEHOLDER = None
 
-    sidebar_values = sidebar()
+    sidebar_values = sidebar_and_init()
 
     current_prompt = st.chat_input("Ask me anything!")
 

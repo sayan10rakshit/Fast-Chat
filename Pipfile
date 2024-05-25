@@ -9,6 +9,10 @@ streamlit = "*"
 pytube = "*"
 youtube-transcript-api = "*"
 duckduckgo-search = "*"
+serpapi = "*"
+google-search-results = "*"
+fuzzywuzzy = "*"
+python-levenshtein = "*"
 
 [dev-packages]
 

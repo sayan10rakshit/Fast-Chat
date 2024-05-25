@@ -8,13 +8,13 @@ Engage in a lightning-fast chat experience with Fast-Chat, leveraging the capabi
 
 ## Key Functionalities
 
-- ⚡**Real-Time Responses**: Experience near-instantaneous responses to your queries, facilitating a seamless conversation flow.
-- 🔍 **Web Search Integration**: Fast-Chat can search the web for information and provide you with relevant results.
-- 📺 **YouTube Comprehension**: Fast-Chat possesses the ability to understand and potentially respond to content from YouTube videos and shorts.
-- ✨ **Interactive Interface**: Enjoy a user-friendly and intuitive chat interface for a smooth interaction.
-- 📝 **Contextual Awareness**: Fast-Chat maintains conversational context, enabling it to provide more relevant and engaging responses.
-- 🤖 **Model Selection**: Choose from a variety of models to tailor the chat experience to your specific needs.
-- 🪛 **Tune Parameters**: Adjust parameters to refine the response generation process and personalize your interaction.
+- [x] ⚡**Real-Time Responses**: Experience near-instantaneous responses to your queries, facilitating a seamless conversation flow.
+- [x] 🔍 **Web Search Integration**: Fast-Chat can search the web for information and provide you with relevant results.
+- [x] 📺 **YouTube Comprehension**: Fast-Chat possesses the ability to understand and potentially respond to content from YouTube videos and shorts.
+- [x] ✨ **Interactive Interface**: Enjoy a user-friendly and intuitive chat interface for a smooth interaction.
+- [x] 📝 **Contextual Awareness**: Fast-Chat maintains conversational context, enabling it to provide more relevant and engaging responses.
+- [x] 🤖 **Model Selection**: Choose from a variety of models to tailor the chat experience to your specific needs.
+- [x] 🪛 **Tune Parameters**: Adjust parameters to refine the response generation process and personalize your interaction.
 
 ## Getting Started
 
@@ -49,3 +49,12 @@ OR
 pipenv shell
 streamlit run app.py
 ```
+
+## Future Enhancements
+
+- [ ] **Enhanced Web Search**: Integrate advanced web search capabilities to provide more comprehensive and accurate results.
+- [ ] **Multi-Modal Support**: Incorporate support for multi-modal interactions, including text, images, and videos.
+- [ ] **Voice Recognition**: Implement voice recognition functionality to enable voice-based interactions.
+- [ ] **Multi-Language Support**: Extend support for multiple languages to cater to a diverse user base.
+- [ ] **Enhanced Context Management**: Improve context management to enable more nuanced and coherent conversations.
+- [ ] **User Profiling**: Implement user profiling to personalize the chat experience and responses.

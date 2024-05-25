@@ -1,8 +1,13 @@
-# import streamlit as st
 from duckduckgo_search import DDGS
+from duckduckgo_search.exceptions import TimeoutException, DuckDuckGoSearchException
 from extract_subs import filter_links
 import time
-from groq import Groq
+import logging
+
+# ! Experimantal Section
+# ? Uncomment the following code to use Groq API for generating search string
+# import groq
+# from groq import Groq
 
 REGIONS = {
     "Arabia": "xa-ar",
@@ -75,84 +80,124 @@ REGIONS = {
     "No region": "wt-wt",
 }
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
-def search_the_web(user_query, max_results=3, region="ie-en", api_key=None):
+
+def search_the_web(
+    user_query,
+    max_results=12,
+    region="ie-en",
+    # api_key=None,  # ? Can be used for an agent that returns appropriate search string
+    retries=3,
+    delay=2,
+    backoff_factor=2,
+):
     if user_query:
-        """Uncomment the code below to use a different agent for the search prompt."""
-        # SEARCH_PROMPT = f"""
-        # <instructions>Given the following search query, give me a good effective search text to search the web. Just respond with one brief text.</instructions>\n
-        # <user_query>{user_query}</user_query>
-        # """
-
-        # messages = [
-        #     {"role": "user", "content": SEARCH_PROMPT},
-        # ]
-        # try:
-        #     client2 = Groq(api_key=api_key)
-        #     chat_completion = client2.chat.completions.create(
-        #         model="llama3-70b-8192",
-        #         messages=messages,
-        #         temperature=1,
-        #         max_tokens=100,
-        #         top_p=0.9,
-        #     )
-
-        #     query = chat_completion.choices[0].message.content or user_query
-        #     print(query)
-
-        # except Exception as e:
-        #     print(e)
-        #     print("Error")
-        #     query = user_query
-        """End of code to use a different agent for the search prompt."""
-
         query = user_query
 
-        results = DDGS().text(query, region=region, max_results=max_results)
+        for attempt in range(retries):
+            try:
+                logging.info(f"Attempt {attempt + 1} for query: {query}")
 
-        img_results = DDGS().images(
-            keywords=query,
-            region="ie-en",
-            safesearch="off",
-            size=None,
-            # color="Monochrome",
-            type_image=None,
-            layout=None,
-            license_image=None,
-            max_results=max_results,
-        )
+                # ! Experimantal Section
+                # ? Uncomment the following code to use Groq API for generating search string
+                # search_prompt = (
+                #     "<instructions>Given the following query, return an appropriate search string: </instructions>\n"
+                #     + query
+                #     + "\n<instructions>Only return the search string, do not return any other information.</instructions>"
+                # )
 
-        video_links = []
-        img_links = []
-        markdown_placeholder = """"""
-        body = """<instructions>Refer these results from the web and respond to the user: </instructions>\n"""
+                # client = Groq(api_key=api_key)
+                # messages = {"role": "user", "content": search_prompt}
+                # chat_completion = client.chat.completions.create(
+                #     model="llama3-70b-8192",
+                #     messages=messages,
+                #     max_tokens=50,
+                # )
+                # query = chat_completion.choices[0].message.content
 
-        if results:
-            for idx, search_result in enumerate(results):
+                results = DDGS().text(query, region=region, max_results=max_results)
+                img_results = DDGS().images(
+                    keywords=query,
+                    region=region,
+                    safesearch="off",
+                    size=None,
+                    type_image=None,
+                    layout=None,
+                    license_image=None,
+                    max_results=max_results,
+                )
 
-                body += f"<result {idx}>\n{search_result['body']}\n</result {idx}>\n"
+                video_links = []
+                img_links = []
+                markdown_placeholder = """"""
+                body = """<instructions>Refer these results from the web and respond to the user: </instructions>\n"""
 
-                video_links_from_search = filter_links(search_result["href"])
+                if results:
+                    for idx, search_result in enumerate(results):
+                        body += f"<result {idx}>\n{search_result['body']}\n</result {idx}>\n"
+                        video_links_from_search = filter_links(search_result["href"])
 
-                if not video_links_from_search:
-                    markdown_placeholder += f"- {search_result['href']}\n"
-                else:
-                    video_links.extend(video_links_from_search)
+                        if not video_links_from_search:
+                            markdown_placeholder += f"- {search_result['href']}\n"
+                        else:
+                            video_links.extend(video_links_from_search)
 
-        if img_results:
-            for idx, image_result in enumerate(img_results):
-                video_links_from_img_search = filter_links(image_result["url"])
-                if not video_links_from_img_search:
-                    markdown_placeholder += f"- {image_result['url']}\n"
-                else:
-                    video_links.extend(video_links_from_img_search)
-                img_links.append(image_result["image"])
+                if img_results:
+                    for idx, image_result in enumerate(img_results):
+                        video_links_from_img_search = filter_links(image_result["url"])
+                        if not video_links_from_img_search:
+                            markdown_placeholder += f"- {image_result['url']}\n"
+                        else:
+                            video_links.extend(video_links_from_img_search)
+                        img_links.append(image_result["image"])
 
-        body += """\n<instructions>The above results might contain irrelevant information. Determine the relevance of the information and respond to the user accordingly.
-                Do not include the text within brackets in your response. </instructions>"""
+                body += """\n<instructions>The above results might contain irrelevant information. Determine the relevance of the information and respond to the user accordingly.
+                        Do not include the text within brackets in your response. </instructions>"""
 
-        # Remove duplicates
-        img_links = list(set(img_links))
-        video_links = list(set(video_links))
+                # Remove duplicates
+                img_links = list(set(img_links))
+                video_links = list(set(video_links))
 
-        return body, img_links, video_links, markdown_placeholder
+                # logging.info(f"Results: {results}")
+                # logging.info(f"Image Results: {img_results}")
+
+                return body, img_links, video_links, markdown_placeholder
+
+            except TimeoutException as e:
+                logging.error(
+                    f"Timeout occurred: {e}. Retrying {attempt + 1}/{retries}..."
+                )
+                time.sleep(delay)
+                delay *= backoff_factor  # Exponential backoff
+            except DuckDuckGoSearchException as e:
+                logging.error(f"Error occurred during DuckDuckGo search: {e}")
+                return None, None, None, None
+            # ! Experimantal Section
+            # ? Uncomment the following code to handle errors from Groq API
+            # except groq.RateLimitError:
+            #     logging.error("Rate limit error occurred. Retrying...")
+            #     return None, None, None, None
+            # except groq.AuthenticationError:
+            #     logging.error("Authentication error occurred. Retrying...")
+            #     return None, None, None, None
+            # except groq.BadRequestError:
+            #     logging.error("Bad request error occurred. Retrying...")
+            #     return None, None, None, None
+            # except groq.InternalServerError:
+            #     logging.error("Internal server error occurred. Retrying...")
+            #     return None, None, None, None
+            except Exception as e:
+                logging.error(f"An unexpected error occurred: {e}")
+                return None, None, None, None
+
+        logging.error("Failed to retrieve results after several attempts.")
+        return None, None, None, None
+
+
+# Example usage
+# results = search_the_web("Tell me about apple")
+# print(results)
