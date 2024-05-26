@@ -12,7 +12,26 @@ def search_the_web(
     gl="in",
     location="Kolkata, West Bengal, India",
     safe="off",
-):
+) -> tuple:
+    """
+    Search the web using Google search engine and return the results.
+
+    Args:
+        num (int): The maximum number of results to return.
+        api_key (str): The API key for SerpApi.
+        engine (str): The search engine to use.
+        q (str): The query to search the web.
+        google_domain (str): The Google domain to search in.
+        hl (str): The language to search in.
+        gl (str): The country to search in.
+        location (str): The location to search in.
+        safe (str): The safe search mode.
+
+    Returns:
+        body (str): The body containing information from the search results.
+        MARKDOWN_PLACEHOLDER (str): The placeholder containing the references to the search results.
+    """
+
     body = """"""
     MARKDOWN_PLACEHOLDER = """"""
 
@@ -70,7 +89,24 @@ def search_images(
     location="Kolkata, West Bengal, India",
     safe="off",
     tbm="isch",
-):
+) -> list:
+    """
+    Search images using Google search engine and return the image links.
+
+    Args:
+        api_key (str): The API key for SerpApi.
+        engine (str): The search engine to use.
+        q (str): The query to search the web.
+        google_domain (str): The Google domain to search in.
+        hl (str): The language to search in.
+        gl (str): The country to search in.
+        location (str): The location to search in.
+        safe (str): The safe search mode.
+        tbm (str): The type of search (images).
+
+    Returns:
+        img_links (list): The list of image links.
+    """
     img_links = []
 
     if not api_key and q:
@@ -110,7 +146,26 @@ def search_videos(
     location="Kolkata, West Bengal, India",
     safe="off",
     tbm="vid",
-):
+) -> list:
+    """
+    Search videos using Google search engine and return the video links.
+
+    [extended_summary]
+
+    Args:
+        num (int): The maximum number of results to return.
+        api_key (str): The API key for SerpApi.
+        engine (str): The search engine to use.
+        q (str): The query to search the web.
+        google_domain (str): The Google domain to search in.
+        hl (str): The language to search in.
+        gl (str): The country to search in.
+        location (str): The location to search in.
+        safe (str): The safe search mode.
+        tbm (str): The type of search (videos).
+    Returns:
+        video_links (list): The list of video links.
+    """
     video_links = []
 
     if not api_key and q:
@@ -146,7 +201,25 @@ def get_web_results(
     query=None,
     location="Kolkata, West Bengal, India",
     max_results=10,
-):
+) -> tuple:
+    """
+    Search the web using Google search engine and return the results.
+
+    This is the main function that orchestrates the search of the web using Google search engine.
+    It uses the `search_the_web`, `search_images`, and `search_videos` functions to get the search results.
+
+    Args:
+        api_key (str): The API key for SerpApi.
+        query (str): The query to search the web.
+        location (str): The location to search in.
+        max_results (int): The maximum number of results to return.
+
+    Returns:
+        body (str): The body containing information from the search results.
+        img_links (list): The list of image links from the search results.
+        video_links (list): The list of video links from the search results.
+        MARKDOWN_PLACEHOLDER (str): The placeholder containing the references to the search results.
+    """
 
     params = {
         "api_key": api_key,

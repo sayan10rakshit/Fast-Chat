@@ -3,21 +3,42 @@ import random
 import groq
 from groq import Groq
 import streamlit as st
-from extract_subs import prepare_prompt, filter_links
-from get_web_results import search_the_web, REGIONS
-from get_web_results_serp import get_web_results
-from get_location import find_closest_match
+from utils.extract_subs import prepare_prompt, filter_links
+from utils.get_web_results import search_the_web, REGIONS
+from utils.get_web_results_serp import get_web_results
+from utils.get_location import find_closest_match
 
 
 # Define a function to handle the toggling logic
-def handle_toggle(toggle_name):
+def handle_toggle(toggle_name: str) -> None:
+    """
+    Handles the toggling logic for the sidebar toggles.
+
+    If one toggle is turned on, the other is turned off.
+    Here, the toggles are "use_you_tube" and "search_the_web".
+
+    Args:
+        toggle_name (str): The name of the toggle that was changed.
+    """
     if toggle_name == "use_you_tube":
         st.session_state.search_the_web = False
     elif toggle_name == "search_the_web":
         st.session_state.use_you_tube = False
 
 
-def sidebar_and_init():
+def sidebar_and_init() -> tuple:
+    """
+    Defines the sidebar and initializes the session state variables.
+
+    Returns:
+        model (str): The model selected by the user.
+        temperature (float): The temperature for calculating the softmax probabilities in the final layer.
+        max_tokens (int): The maximum tokens allowed in the response.
+        top_p (float): The top p cumulative probability tokens to consider in each step of the sampling process.
+        region (str): The region selected by the user.
+        max_results (int): The maximum results to refer from the search.
+
+    """
     model = None
     temperature = None
     max_tokens = None
@@ -256,7 +277,25 @@ def body(
     top_p=None,
     region=None,
     max_results=None,
-):
+) -> tuple:
+    """
+    The main body of the app that handles the user input and model response.
+
+    Args:
+        prompt (str, optional): The user input. Defaults to None.
+        model (str, optional): The model selected by the user. Defaults to None.
+        temperature (float, optional): The temperature for calculating the softmax probabilities in the final layer. Defaults to None.
+        max_tokens (int, optional): The maximum tokens allowed in the response. Defaults to None.
+        top_p (float, optional): The top p cumulative probability tokens to consider in each step of the sampling process. Defaults to None.
+        region (str, optional): The region selected by the user. Defaults to None.
+        max_results (int, optional): The maximum results to refer from the search. Defaults to None.
+
+    Returns:
+        all_yt_links (list): The list of YouTube links extracted from the prompt.
+        img_links (list): The list of image links extracted from the search results.
+        video_links (list): The list of video links extracted from the search results.
+        MARKDOWN_PLACEHOLDER (str): The markdown placeholder for the search results.
+    """
 
     GENERIC_RESPONSE = "Sorry, that's on me.\nDue to limited hardware resources in \
                                 the free tier, I can't respond to this query.\nPlease try again later or \
@@ -430,7 +469,19 @@ def show_media(
     img_links=None,
     video_links=None,
     MARKDOWN_PLACEHOLDER=None,
-):
+) -> None:
+    """
+    Display the YouTube video/shorts and web search results after the model response.
+
+    This function is responsible for displaying the images, videos, and web search references after the model response on the right side of the app.
+    The media content is only displayed for the current prompt and not for the previous prompts.
+
+    Args:
+        all_yt_links ([type], optional): All the YouTube links extracted from the prompt. Defaults to None.
+        img_links ([type], optional): All the image links extracted from the search results. Defaults to None.
+        video_links ([type], optional): All the video links extracted from the search results. Defaults to None.
+        MARKDOWN_PLACEHOLDER ([type], optional): The list of web search references. Defaults to None.
+    """
     # ? YOUTUBE VIDEO/SHORTS RESULTS after model response
     # Display the YouTube video/shorts after the response
     if (

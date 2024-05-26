@@ -1,10 +1,9 @@
 import pytube
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
-from typing import Generator
 
 
-# def make_batches(text: str, max_words: int) -> list:
+# def make_batches(text: str, max_words: int) -> list: # ! Uncomment this function to make batches based on words
 #     # Split the text into batches where each batch has a maximum of max_words
 #     words = text.split()
 #     if len(words) <= max_words:
@@ -15,7 +14,17 @@ from typing import Generator
 #         ]
 
 
-def make_batches(text, max_characters):
+def make_batches(text: str, max_characters: int) -> list[str]:
+    """
+    Make batches of text with a maximum number of characters.
+
+    Args:
+        text (str): The text to split into batches.
+        max_characters (int): The maximum number of characters in each batch.
+
+    Returns:
+        list[str]: A list of text batches.
+    """
     if len(text) <= max_characters:
         return [text]
     else:

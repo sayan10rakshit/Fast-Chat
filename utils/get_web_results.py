@@ -1,10 +1,10 @@
 from duckduckgo_search import DDGS
 from duckduckgo_search.exceptions import TimeoutException, DuckDuckGoSearchException
-from extract_subs import filter_links
+from utils.extract_subs import filter_links
 import time
 import logging
 
-# ! Experimantal Section
+# ! Experimental Section
 # ? Uncomment the following code to use Groq API for generating search string
 # import groq
 # from groq import Groq
@@ -94,7 +94,25 @@ def search_the_web(
     retries=3,
     delay=2,
     backoff_factor=2,
-):
+) -> tuple:
+    """
+    Search the web using DuckDuckGo search engine and return the results.
+
+    Args:
+        user_query (str): The query to search the web.
+        max_results (int): The maximum number of results to return.
+        region (str): The region to search in.
+        retries (int): The number of retries to attempt if an error occurs.
+        delay (int): The delay between retries.
+        backoff_factor (int): The factor to increase the delay between retries.
+        api_key (str): The API key for Groq API.
+
+    Returns:
+        body (str): The body containing information from the search results.
+        img_links (list): The list of image links from the search results.
+        video_links (list): The list of video links from the search results.
+        markdown_placeholder (str): The placeholder containing the references to the search results.
+    """
     if user_query:
         query = user_query
 
@@ -102,7 +120,7 @@ def search_the_web(
             try:
                 logging.info(f"Attempt {attempt + 1} for query: {query}")
 
-                # ! Experimantal Section
+                # ! Experimental Section
                 # ? Uncomment the following code to use Groq API for generating search string
                 # search_prompt = (
                 #     "<instructions>Given the following query, return an appropriate search string: </instructions>\n"
@@ -176,7 +194,7 @@ def search_the_web(
             except DuckDuckGoSearchException as e:
                 logging.error(f"Error occurred during DuckDuckGo search: {e}")
                 return None, None, None, None
-            # ! Experimantal Section
+            # ! Experimental Section
             # ? Uncomment the following code to handle errors from Groq API
             # except groq.RateLimitError:
             #     logging.error("Rate limit error occurred. Retrying...")
