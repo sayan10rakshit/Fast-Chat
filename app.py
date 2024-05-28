@@ -191,20 +191,20 @@ def sidebar_and_init() -> tuple:
             )
 
             st.session_state.use_serp_api = st.toggle(
-                "Use SerpApi",
+                "Perform DeepSearch",
                 False,
             )
 
             # ? SerpApi Integration
             if st.session_state.use_serp_api:
                 st.session_state.special_message2 = """
-                Although SerpApi gives more comprehensive search results, it might be slow.
+                Although DeepSearch gives more comprehensive search results, it might be pretty slow.\n
                 """
 
                 serp_api_key = st.text_input(
                     "SerpApi Key",
                     type="password",
-                    help="Enter your SerpApi key to get more comprehensive search results.",
+                    help="Enter your SerpApi key to perform DeepSearch.",
                 )
                 st.markdown(
                     "[Get your FREE SerpApi key!](https://serpapi.com/manage-api-key)",
@@ -295,6 +295,7 @@ def body(
         img_links (list): The list of image links extracted from the search results.
         video_links (list): The list of video links extracted from the search results.
         MARKDOWN_PLACEHOLDER (str): The markdown placeholder for the search results.
+        related_questions (list): The list of related questions extracted from the search results.
     """
 
     GENERIC_RESPONSE = "Sorry, that's on me.\nDue to limited hardware resources in \
@@ -306,6 +307,7 @@ def body(
     img_links = None
     video_links = None
     MARKDOWN_PLACEHOLDER = None
+    related_questions = None
 
     if prompt:
         # Add user message to chat history
@@ -350,18 +352,22 @@ def body(
 
                 if st.session_state.search_the_web:
                     with st.spinner("Searching the web..."):
-                        if (  # ? SerpApi Integration
+                        if (  # ? Deep Search Integration with SerpApi
                             st.session_state.use_serp_api
                             and st.session_state.serp_api_key
                             and st.session_state.serpapi_location
                         ):
-                            BODY, img_links, video_links, MARKDOWN_PLACEHOLDER = (
-                                get_web_results(
-                                    api_key=st.session_state.serp_api_key,
-                                    query=prompt,
-                                    location=st.session_state.serpapi_location,
-                                    max_results=max_results,
-                                )
+                            (
+                                BODY,
+                                img_links,
+                                video_links,
+                                MARKDOWN_PLACEHOLDER,
+                                related_questions,
+                            ) = get_web_results(
+                                api_key=st.session_state.serp_api_key,
+                                query=prompt,
+                                location=st.session_state.serpapi_location,
+                                max_results=max_results,
                             )
                         else:  # ? DDG Integration
                             BODY, img_links, video_links, MARKDOWN_PLACEHOLDER = (
@@ -461,7 +467,7 @@ def body(
                     del st.session_state.messages
                 print(e)
 
-    return all_yt_links, img_links, video_links, MARKDOWN_PLACEHOLDER
+    return all_yt_links, img_links, video_links, MARKDOWN_PLACEHOLDER, related_questions
 
 
 def show_media(
@@ -477,10 +483,11 @@ def show_media(
     The media content is only displayed for the current prompt and not for the previous prompts.
 
     Args:
-        all_yt_links ([type], optional): All the YouTube links extracted from the prompt. Defaults to None.
-        img_links ([type], optional): All the image links extracted from the search results. Defaults to None.
-        video_links ([type], optional): All the video links extracted from the search results. Defaults to None.
-        MARKDOWN_PLACEHOLDER ([type], optional): The list of web search references. Defaults to None.
+        all_yt_links (list, optional): All the YouTube links extracted from the prompt. Defaults to None.
+        img_links (list, optional): All the image links extracted from the search results. Defaults to None.
+        video_links (list, optional): All the video links extracted from the search results. Defaults to None.
+        MARKDOWN_PLACEHOLDER (str, optional): The list of web search references. Defaults to None.
+        related_questions (list, optional): The list of related questions extracted from the search results. Defaults to None.
     """
     # ? YOUTUBE VIDEO/SHORTS RESULTS after model response
     # Display the YouTube video/shorts after the response
@@ -493,7 +500,10 @@ def show_media(
         == "video"  # if the YT content is a shorts, don't display it
     ):
         for video_link, _ in all_yt_links:
-            st.video(video_link, start_time=0)
+            try:
+                st.video(video_link, start_time=0)
+            except Exception as e:
+                print(e)
 
     # ? WEB SEARCH RESULTS after model response
     # Display the web search references after the response
@@ -535,18 +545,27 @@ def show_media(
             ):
                 for idx, video_link in enumerate(video_links[:videos_to_show]):
                     with cols_vids[idx % 2]:
-                        st.video(video_link, start_time=0)
+                        try:
+                            st.video(video_link, start_time=0)
+                        except Exception as e:
+                            print(e)
                 if len(video_links) > videos_to_show:
                     with st.expander("View more videos"):
                         more_cols = st.columns(2)
                         for idx, video_link in enumerate(video_links[videos_to_show:]):
                             with more_cols[idx % 2]:
-                                st.video(video_link, start_time=0)
+                                try:
+                                    st.video(video_link, start_time=0)
+                                except Exception as e:
+                                    print(e)
             # ? DDG Integration
             else:
                 for idx, (video_link, _) in enumerate(video_links[:videos_to_show]):
                     with cols_vids[idx % 2]:
-                        st.video(video_link, start_time=0)
+                        try:
+                            st.video(video_link, start_time=0)
+                        except Exception as e:
+                            print(e)
                 # Show additional videos under the expander if there are any
                 if len(video_links) > videos_to_show:
                     with st.expander("View more videos"):
@@ -555,7 +574,10 @@ def show_media(
                             video_links[videos_to_show:]
                         ):
                             with more_cols[idx % 2]:
-                                st.video(video_link, start_time=0)
+                                try:
+                                    st.video(video_link, start_time=0)
+                                except Exception as e:
+                                    print(e)
 
         with st.expander("Sources from the web"):
             st.markdown(MARKDOWN_PLACEHOLDER)
@@ -572,6 +594,7 @@ if __name__ == "__main__":
     img_links = None
     video_links = None
     MARKDOWN_PLACEHOLDER = None
+    related_questions = None
 
     sidebar_values = sidebar_and_init()
 
@@ -580,12 +603,56 @@ if __name__ == "__main__":
     if current_prompt:
         main_cols = st.columns([0.6, 0.4])
         with main_cols[0]:
-            all_yt_links, img_links, video_links, MARKDOWN_PLACEHOLDER = body(
+            (
+                all_yt_links,
+                img_links,
+                video_links,
+                MARKDOWN_PLACEHOLDER,
+                related_questions,
+            ) = body(
                 current_prompt,
                 *sidebar_values,
             )
         with main_cols[1]:
             show_media(all_yt_links, img_links, video_links, MARKDOWN_PLACEHOLDER)
+
+        if related_questions:
+            st.markdown("### Related Questions")
+            for question in related_questions:
+                with st.expander(question["question"]):
+                    if "thumbnail" in question:
+                        if "title" in question:
+                            st.markdown(f"**{question['title']}**")
+                        col1, col2 = st.columns([1, 5])
+                        if "thumbnail" in question:
+                            col1.image(question["thumbnail"])
+                        if "snippet" in question:
+                            col2.write(question["snippet"])
+                        if "link" in question:
+                            if "source_logo" in question:
+                                # Show the source logo inside markdown just before the link
+                                col2.markdown(
+                                    f"![source]({question['source_logo']})  [{question['displayed_link']}]({question['link']})"
+                                )
+                            else:
+                                col2.markdown(
+                                    f"[{question['displayed_link']}]({question['link']})"
+                                )
+                    else:
+                        if "title" in question:
+                            st.markdown(f"**{question['title']}**")
+                        if "snippet" in question:
+                            st.write(question["snippet"])
+                        if "link" in question:
+                            if "source_logo" in question:
+                                # Show the source logo inside markdown just before the link
+                                st.markdown(
+                                    f"![source]({question['source_logo']})  [{question['displayed_link']}]({question['link']})"
+                                )
+                            else:
+                                st.markdown(
+                                    f"[{question['displayed_link']}]({question['link']})"
+                                )
 
     if current_prompt:
         st.info(

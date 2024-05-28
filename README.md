@@ -52,7 +52,6 @@ streamlit run app.py
 
 ## Future Enhancements
 
-- [ ] **Enhanced Web Search**: Integrate advanced web search capabilities to provide more comprehensive and accurate results.
 - [ ] **Multi-Modal Support**: Incorporate support for multi-modal interactions, including text, images, and videos.
 - [ ] **Voice Recognition**: Implement voice recognition functionality to enable voice-based interactions.
 - [ ] **Multi-Language Support**: Extend support for multiple languages to cater to a diverse user base.

@@ -13,6 +13,8 @@ serpapi = "*"
 google-search-results = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
+aiohttp = "*"
+chardet = "*"
 
 [dev-packages]
 

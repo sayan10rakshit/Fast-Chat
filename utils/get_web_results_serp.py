@@ -1,9 +1,47 @@
 from serpapi import GoogleSearch
 from concurrent.futures import ThreadPoolExecutor
+from utils.deep_search import fetch_text
+from utils.extract_subs import filter_links
+
+
+def perform_shallow_search(search_results: dict) -> tuple:
+    body = """"""
+    markdown_placeholder = """"""
+    for idx, search_result in enumerate(search_results["organic_results"]):
+        try:
+            body += f"<result {idx}>\n{search_result['snippet']}\n</result {idx}>\n"
+            markdown_placeholder += (
+                f"- [**{search_result['source']}**]({search_result['link']})\n"
+            )
+        except Exception as e:
+            markdown_placeholder += (
+                f"- {search_result['link']}\n"  # If the source is not available
+            )
+            print(e)
+    return body, markdown_placeholder
+
+
+def perform_deep_search(search_results: list) -> str:
+    body = """"""
+    markdown_placeholder = """"""
+    all_links = []
+    search_result_snippets = []
+    for _, search_result in enumerate(search_results["organic_results"]):
+        all_links.append(search_result["link"])
+        search_result_snippets.append(search_result["snippet"])
+        markdown_placeholder += (
+            f"- [**{search_result['source']}**]({search_result['link']})\n"
+        )
+
+    paragraph_texts = fetch_text(all_links)
+    body += """<instructions>Refer these results from the web and respond to the user: </instructions>\n"""
+    body += paragraph_texts
+    return body, markdown_placeholder
 
 
 def search_the_web(
     num=10,
+    deep_search=False,
     api_key=None,
     engine="google",
     q=None,
@@ -26,18 +64,21 @@ def search_the_web(
         gl (str): The country to search in.
         location (str): The location to search in.
         safe (str): The safe search mode.
+        deep_search (bool): Whether to perform a deep search or not.
 
     Returns:
         body (str): The body containing information from the search results.
-        MARKDOWN_PLACEHOLDER (str): The placeholder containing the references to the search results.
+        markdown_placeholder (str): The placeholder containing the references to the search results.
+        related_questions (dict): The dict of related questions from the search results.
     """
 
-    body = """"""
-    MARKDOWN_PLACEHOLDER = """"""
+    body_text = """"""
+    markdown_placeholder = """"""
+    related_questions = None
 
     if not api_key and q:
-        body += f"Please provide an API key to search the web for {q}\n"
-        return body, MARKDOWN_PLACEHOLDER
+        body_text += f"Please provide an API key to search the web for {q}\n"
+        return body_text, markdown_placeholder
 
     try:
         search_results = GoogleSearch(
@@ -54,29 +95,64 @@ def search_the_web(
             }
         ).get_dict()
 
-        body += """<instructions>Refer these results from the web and respond to the user: </instructions>\n"""
+        if "related_questions" in search_results.keys():
+            related_questions = search_results["related_questions"]
 
-        for idx, search_result in enumerate(search_results["organic_results"]):
-            body += f"<result {idx}>\n{search_result['snippet']}\n</result {idx}>\n"
-            try:
-                MARKDOWN_PLACEHOLDER += (
-                    f"- [**{search_result['source']}**]({search_result['link']})\n"
-                )
-            except Exception as e:
-                MARKDOWN_PLACEHOLDER += (
-                    f"- **{search_result['source']}** : {search_result['link']}\n"
-                )
-                print(e)
+        body_text += """<instructions>Refer these results from the web and respond to the user appropriately: </instructions>\n"""
 
-        body += """\n<instructions>The above results might contain irrelevant information. Determine the relevance of the information and respond to the user accordingly.
-                        Do not include the text within brackets in your response. </instructions>"""
+        if "answer_box" in search_results.keys():
+            body_text += (
+                f"<major_info>{search_results['answer_box']['snippet']}</major_info>\n"
+            )
 
-        return body, MARKDOWN_PLACEHOLDER
+        # if not deep_search:
+        #     body, markdown_placeholder = perform_shallow_search(search_results)
+        #     body_text += body
+        #     return body_text, markdown_placeholder
+        # else:
+        try:  # ? Perform deep search by default; If an error occurs, perform a shallow search
+            body, markdown_placeholder = perform_deep_search(search_results)
+            if body:
+                # If there are not enough words in the body, we perform a shallow search
+                if len(body.split()) < 100:
+                    body, markdown_placeholder = perform_shallow_search(search_results)
+                    body_text += body
+                    return (
+                        body_text,
+                        markdown_placeholder,
+                        related_questions,
+                    )  # ? Return the shallow search results
+                print("Performed deep search!")
+                body_text += body
+                if (
+                    len(body_text.split(" ")) > 4500
+                ):  # ? Setting a hard limit of 4500 words, might need to adjust
+                    body_text = " ".join(body_text.split(" ")[:4500])
+                    body_text += """\n<instructions>The above results might contain irrelevant information. Determine the relevance of the information and respond to the user accordingly.
+                    Do not include the text within brackets in your response. </instructions>"""
+                return (
+                    body_text,
+                    markdown_placeholder,
+                    related_questions,
+                )  # ? Return the deep search results
+            else:  # ? If the body is empty, perform a shallow search
+                body, markdown_placeholder = perform_shallow_search(search_results)
+                body_text += body
+                body_text += """\n<instructions>The above results might contain irrelevant information. Determine the relevance of the information and respond to the user accordingly.
+                    Do not include the text within brackets in your response. </instructions>"""
+                return body_text, markdown_placeholder, related_questions
+        except Exception as e:
+            print(e)
+            print("Error in deep search. Performing shallow search.")
+            body, markdown_placeholder = perform_shallow_search(search_results)
+            body_text += """\n<instructions>The above results might contain irrelevant information. Determine the relevance of the information and respond to the user accordingly.
+                    Do not include the text within brackets in your response. </instructions>"""
+            return body, markdown_placeholder, related_questions
 
     except Exception as e:
-        body += f"An error occurred: {e}\n"
+        body_text += f"An error occurred: {e}\n"
         print(e)
-        return body, MARKDOWN_PLACEHOLDER
+        return body_text, markdown_placeholder, related_questions
 
 
 def search_images(
@@ -200,6 +276,7 @@ def get_web_results(
     api_key=None,
     query=None,
     location="Kolkata, West Bengal, India",
+    deep_search=False,
     max_results=10,
 ) -> tuple:
     """
@@ -233,12 +310,20 @@ def get_web_results(
     }
 
     with ThreadPoolExecutor() as executor:
-        body, MARKDOWN_PLACEHOLDER = executor.submit(
-            search_the_web, num=max_results, **params
+        body, markdown_placeholder, related_questions = executor.submit(
+            search_the_web,
+            num=max_results,
+            deep_search=deep_search,
+            **params,
         ).result()
+        print("Got the body and markdown_placeholder")
         img_links = executor.submit(search_images, tbm="isch", **params).result()
+        print("Got the img_links")
         video_links = executor.submit(
             search_videos, num=max_results, tbm="vid", **params
         ).result()
+        print("Got the video_links")
+        if video_links:
+            yt_links = list(filter(filter_links, video_links))
 
-    return body, img_links, video_links, MARKDOWN_PLACEHOLDER
+    return body, img_links, yt_links, markdown_placeholder, related_questions
