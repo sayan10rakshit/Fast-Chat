@@ -15,6 +15,7 @@ fuzzywuzzy = "*"
 python-levenshtein = "*"
 aiohttp = "*"
 chardet = "*"
+beautifulsoup4 = "*"
 
 [dev-packages]
 
