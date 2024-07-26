@@ -18,6 +18,7 @@ chardet = "*"
 beautifulsoup4 = "*"
 streamlit-audiorecorder = "*"
 audiorecorder = "*"
+pyaudio = "*"
 
 [dev-packages]
 
