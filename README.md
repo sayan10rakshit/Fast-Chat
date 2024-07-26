@@ -10,10 +10,10 @@ Engage in a lightning-fast chat experience with Fast-Chat, leveraging the capabi
 
 [![Gemma Model](https://img.shields.io/badge/Gemma_Model-Open_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-Open_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-Open_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Fast_Inference_Engine-black)](https://wow.groq.com/why-groq/)
 
-<img src="utils/images/gemma.webp" width=175>
-<img src="utils/images/llama.webp" width=175>
-<img src="utils/images/mistral_ai_image.jpg" width=175>
-<img src="utils/images/groq.jpg" width=175>
+<img src="utils/images/gemma.webp" width=150>
+<img src="utils/images/llama.webp" width=150>
+<img src="utils/images/mistral_ai_image.jpg" width=150>
+<img src="utils/images/groq.jpg" width=150>
 
 ## Key Functionalities
 
