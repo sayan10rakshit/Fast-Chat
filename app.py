@@ -1,7 +1,9 @@
+import os
 import random
 
 import groq
 from groq import Groq
+from audiorecorder import audiorecorder
 import streamlit as st
 from utils.extract_subs import prepare_prompt, filter_links
 from utils.get_web_results import search_the_web, REGIONS
@@ -45,6 +47,7 @@ def sidebar_and_init() -> tuple:
     top_p = None
     region = None
     max_results = None
+    audio = None
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -76,6 +79,9 @@ def sidebar_and_init() -> tuple:
             }
         )
 
+    if "use_audio_input" not in st.session_state:
+        st.session_state.use_audio_input = False
+
     if "use_you_tube" not in st.session_state:
         st.session_state.use_you_tube = False
 
@@ -98,6 +104,17 @@ def sidebar_and_init() -> tuple:
         1  # will be incremented each time streamlit reruns the script
     )
 
+    if "all_yt_links" not in st.session_state:
+        st.session_state.all_yt_links = []
+    if "img_links" not in st.session_state:
+        st.session_state.img_links = []
+    if "video_links" not in st.session_state:
+        st.session_state.video_links = []
+    if "related_questions" not in st.session_state:
+        st.session_state.related_questions = []
+    if "MARKDOWN_PLACEHOLDER" not in st.session_state:
+        st.session_state.MARKDOWN_PLACEHOLDER = None
+
     if "special_message" not in st.session_state:
         st.session_state.special_message = ""
     if "special_message_shown" not in st.session_state:
@@ -108,7 +125,10 @@ def sidebar_and_init() -> tuple:
     if "special_message2_shown" not in st.session_state:
         st.session_state.special_message2_shown = False
 
-    st.markdown("# Fast Chat ⚡")
+    st.markdown(
+        "# Fast Chat ⚡"
+    )
+    st.markdown("by **[Sayan Rakshit](https://github.com/sayan10rakshit/Fast-Chat)**")
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -127,9 +147,38 @@ def sidebar_and_init() -> tuple:
 
         model = st.selectbox(
             "Select Model",
-            ["mixtral-8x7b-32768", "gemma-7b-it", "llama3-70b-8192", "llama3-8b-8192"],
-            index=2,
+            [
+                "gemma2-9b-it",
+                "gemma-7b-it",
+                "mixtral-8x7b-32768",
+                "llama-3.1-8b-instant",
+                "llama3-8b-8192",
+                "llama-3.1-70b-versatile",
+                "llama3-70b-8192",
+            ],
+            index=5,
         )
+
+        if "gemma" in model:
+            st.markdown("[**Model by**](https://ai.google.dev/gemma)")
+            st.image(
+                "https://www.gstatic.com/images/branding/googlelogo/svg/googlelogo_clr_74x24px.svg",
+                width=125,
+            )
+
+        elif "llama" in model:
+            st.markdown("[**Model by**](https://llama.meta.com/)")
+            st.image(
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/320px-Meta_Platforms_Inc._logo.svg.png",
+                width=125,
+            )
+
+        elif "mixtral" in model:
+            st.markdown("[**Model by**](https://mistral.ai/news/mixtral-of-experts/)")
+            st.image(
+                "https://upload.wikimedia.org/wikipedia/de/thumb/b/b7/Mistral_AI_Logo.png/320px-Mistral_AI_Logo.png",
+                width=125,
+            )
 
         temperature = st.slider(
             "Temperature",
@@ -144,6 +193,10 @@ def sidebar_and_init() -> tuple:
             max_tokens = st.slider(
                 "Max Tokens", 0, 32768, 1024, help="Max tokens in the response"
             )
+        elif model in ("llama3-70b-8192", "llama-3.1-70b-versatile"):
+            max_tokens = st.slider(
+                "Max Tokens", 0, 8000, 1024, help="Max tokens in the response"
+            )
         else:
             max_tokens = st.slider(
                 "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
@@ -155,8 +208,24 @@ def sidebar_and_init() -> tuple:
             1.0,
             0.9,
             0.01,
-            help="A stochastic decoding method where the model considers the cumulative probability of the most likely tokens.",
+            help="""A stochastic decoding method where the top p cumulative probability tokens (sorted w.r.t. probability)
+            are considered in each time step. The top p tokens are sampled randomly.""",
         )
+
+        st.toggle(
+            "Audio Input",
+            st.session_state.use_audio_input,
+            key="use_audio_input",
+        )
+
+        if st.session_state.use_audio_input:
+            audio = audiorecorder(
+                start_prompt="",
+                stop_prompt="",
+                pause_prompt="",
+                show_visualizer=True,
+                key=None,
+            )
 
         st.toggle(
             "Use YouTube",
@@ -226,9 +295,12 @@ def sidebar_and_init() -> tuple:
                     st.session_state.serpapi_location = authentic_serpapi_location
                     st.session_state.old_user_serpapi_location = serpapi_location
 
-            if max_results >= 20 and model == "llama3-70b-8192":
-                st.session_state.special_message = """
-                Although llama3-70b-8192 is the most powerful model, you might get slow responses.\n
+            if max_results >= 20 and model in (
+                "llama3-70b-8192",
+                "llama-3.1-70b-versatile",
+            ):
+                st.session_state.special_message = f"""
+                Although {model} is a more powerful model, you might get slow responses.\n
                 It is recommended to use other models or to reduce the max search results.\n
                 mixtral-8x7b-32768 is faster and can handle more tokens.
                 """
@@ -243,6 +315,12 @@ def sidebar_and_init() -> tuple:
             st.session_state.remove_unnecessary_messages = False
             # reload the page to display the welcome message
             st.rerun()
+
+        st.markdown("**:gray[Powered by]**")
+        st.image(
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Groq_logo.svg/152px-Groq_logo.svg.png",
+            width=50,
+        )
 
     # ? Show if model is llama3-70b-8192 and max_results is greater than 20
     if st.session_state.special_message and not st.session_state.special_message_shown:
@@ -259,14 +337,7 @@ def sidebar_and_init() -> tuple:
         st.session_state.special_message2 = ""
         st.session_state.special_message2_shown = True
 
-    return (
-        model,
-        temperature,
-        max_tokens,
-        top_p,
-        region,
-        max_results,
-    )
+    return (model, temperature, max_tokens, top_p, region, max_results, audio)
 
 
 def body(
@@ -333,10 +404,13 @@ def body(
                         if (
                             prompt_modified_list
                         ):  # only add the modified prompt if subtitles were extracted
-                            st.session_state.remove_unnecessary_messages = True
+                            st.session_state.remove_unnecessary_messages = True  # a flag to remove the modified prompt from the chat history
                             for prompt_modified in prompt_modified_list:
                                 st.session_state.messages.append(
-                                    {"role": "user", "content": prompt_modified}
+                                    {
+                                        "role": "user",
+                                        "content": prompt_modified,
+                                    }  # temporarily add the modified prompt to the chat history
                                 )
                         # If subtitles were not extracted, then treat the prompt as a normal prompt
 
@@ -369,7 +443,7 @@ def body(
                                 location=st.session_state.serpapi_location,
                                 max_results=max_results,
                             )
-                        else:  # ? DDG Integration
+                        else:  # ? DuckDuckGo Integration
                             BODY, img_links, video_links, MARKDOWN_PLACEHOLDER = (
                                 search_the_web(
                                     prompt,
@@ -380,9 +454,12 @@ def body(
                             )
 
                         if BODY:
-                            st.session_state.remove_unnecessary_messages = True
+                            st.session_state.remove_unnecessary_messages = True  # a flag to remove the search results from the chat history
                             st.session_state.messages.append(
-                                {"role": "user", "content": BODY}
+                                {
+                                    "role": "user",
+                                    "content": BODY,
+                                }  # temporarily add the search results to the chat history
                             )
 
                 # Display assistant response in chat message container
@@ -401,21 +478,24 @@ def body(
 
                             if (
                                 prompt_modified_list
-                                and st.session_state.remove_unnecessary_messages
+                                and st.session_state.remove_unnecessary_messages  # if YouTube subtitles were extracted and the flag is set
                             ):
                                 # If subtitles were extracted, then remove the modified prompt from the chat history
-                                for _ in range(len(prompt_modified_list)):
-                                    st.session_state.messages.pop()
+                                for _ in range(
+                                    len(prompt_modified_list)
+                                ):  # remove all the modified prompts
+                                    st.session_state.messages.pop()  # last n = len(prompt_modified_list) messages contain the modified prompts
                                 st.session_state.remove_unnecessary_messages = False
                             elif (
                                 st.session_state.search_the_web
-                                and st.session_state.remove_unnecessary_messages
+                                and st.session_state.remove_unnecessary_messages  # if search results were displayed and the flag is set
                             ):
                                 # If search results were displayed, then remove the search results from the chat history
                                 st.session_state.messages.pop()
                                 st.session_state.remove_unnecessary_messages = False
 
                             # Add assistant response to chat history
+                            #! Previous clean-ups was/were necessary to remove the modified prompt or search results from the chat history
                             st.session_state.messages.append(
                                 {
                                     "role": "assistant",
@@ -475,7 +555,9 @@ def show_media(
     img_links=None,
     video_links=None,
     MARKDOWN_PLACEHOLDER=None,
-) -> None:
+) -> (
+    None
+):  #! This will only be executed (display the media content/s) if either YouTube or Web search is enabled
     """
     Display the YouTube video/shorts and web search results after the model response.
 
@@ -588,6 +670,9 @@ if __name__ == "__main__":
         page_title="Fast Chat",
         page_icon="⚡",
         layout="wide",
+        menu_items={
+            "About": "Welcome to Fast Chat! You can ask questions, get summaries of YouTube videos, and search the web. Enjoy chatting! 😊",
+        },
     )
 
     all_yt_links = None
@@ -595,30 +680,69 @@ if __name__ == "__main__":
     video_links = None
     MARKDOWN_PLACEHOLDER = None
     related_questions = None
+    current_prompt = None
 
-    sidebar_values = sidebar_and_init()
+    all_sidebar_values = sidebar_and_init()
+    audio = all_sidebar_values[-1]
+    sidebar_values = all_sidebar_values[:-1]
 
-    current_prompt = st.chat_input("Ask me anything!")
+    # ? Audio Input check
+    if st.session_state.use_audio_input and audio:
+
+        if audio is not None and len(audio) > 0:
+            FILE_NAME = "audio.wav"
+            audio.export(FILE_NAME, format="wav")
+            abs_path = os.path.dirname(__file__) + "/" + FILE_NAME
+
+            whisper_client = Groq(
+                api_key=st.session_state.api_key,
+            )
+
+            try:
+                transcription = None
+                with open(abs_path, "rb") as file:
+                    transcription = whisper_client.audio.transcriptions.create(
+                        file=(abs_path, file.read()),
+                        model="whisper-large-v3",
+                    )
+
+                if transcription:
+                    current_prompt = transcription.text
+
+            # ? If some error occurs while processing the audio, then revert back to text input
+            except Exception as e:
+                st.error("An error occurred while processing the audio.")
+                print(e)
+                current_prompt = st.chat_input("Ask me anything!")
+
+    else:
+        current_prompt = st.chat_input("Ask me anything!")
 
     if current_prompt:
         main_cols = st.columns([0.6, 0.4])
         with main_cols[0]:
             (
-                all_yt_links,
-                img_links,
-                video_links,
-                MARKDOWN_PLACEHOLDER,
-                related_questions,
+                st.session_state.all_yt_links,
+                st.session_state.img_links,
+                st.session_state.video_links,
+                st.session_state.MARKDOWN_PLACEHOLDER,
+                st.session_state.related_questions,
             ) = body(
                 current_prompt,
                 *sidebar_values,
             )
-        with main_cols[1]:
-            show_media(all_yt_links, img_links, video_links, MARKDOWN_PLACEHOLDER)
 
-        if related_questions:
+        with main_cols[1]:
+            show_media(
+                st.session_state.all_yt_links,
+                st.session_state.img_links,
+                st.session_state.video_links,
+                st.session_state.MARKDOWN_PLACEHOLDER,
+            )
+
+        if st.session_state.related_questions:
             st.markdown("### Related Questions")
-            for question in related_questions:
+            for question in st.session_state.related_questions:
                 with st.expander(question["question"]):
                     if "thumbnail" in question:
                         if "title" in question:
