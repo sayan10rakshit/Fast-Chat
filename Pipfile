@@ -16,7 +16,6 @@ python-levenshtein = "*"
 aiohttp = "*"
 chardet = "*"
 beautifulsoup4 = "*"
-pyaudio = "*"
 streamlit-audiorecorder = "*"
 audiorecorder = "*"
 
