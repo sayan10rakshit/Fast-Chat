@@ -81,7 +81,7 @@ pip install -r requirements.txt
     source .env_for_fast_chat/bin/activate
     streamlit run app.py
     # Deactivate the virtual environment after using Fast-Chat
-    exit
+    deactivate
     ```
 
 ## Future Enhancements
