@@ -3,7 +3,6 @@ import random
 
 import groq
 from groq import Groq
-from audiorecorder import audiorecorder
 import streamlit as st
 from utils.extract_subs import prepare_prompt, filter_links
 from utils.get_web_results import search_the_web, REGIONS
@@ -47,7 +46,6 @@ def sidebar_and_init() -> tuple:
     top_p = None
     region = None
     max_results = None
-    audio = None
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -78,9 +76,6 @@ def sidebar_and_init() -> tuple:
                 "content": placeholder_messages,
             }
         )
-
-    if "use_audio_input" not in st.session_state:
-        st.session_state.use_audio_input = False
 
     if "use_you_tube" not in st.session_state:
         st.session_state.use_you_tube = False
@@ -125,9 +120,7 @@ def sidebar_and_init() -> tuple:
     if "special_message2_shown" not in st.session_state:
         st.session_state.special_message2_shown = False
 
-    st.markdown(
-        "# Fast Chat ⚡"
-    )
+    st.markdown("# Fast Chat ⚡")
     st.markdown("by **[Sayan Rakshit](https://github.com/sayan10rakshit/Fast-Chat)**")
 
     for message in st.session_state.messages:
@@ -211,21 +204,6 @@ def sidebar_and_init() -> tuple:
             help="""A stochastic decoding method where the top p cumulative probability tokens (sorted w.r.t. probability)
             are considered in each time step. The top p tokens are sampled randomly.""",
         )
-
-        st.toggle(
-            "Audio Input",
-            st.session_state.use_audio_input,
-            key="use_audio_input",
-        )
-
-        if st.session_state.use_audio_input:
-            audio = audiorecorder(
-                start_prompt="",
-                stop_prompt="",
-                pause_prompt="",
-                show_visualizer=True,
-                key=None,
-            )
 
         st.toggle(
             "Use YouTube",
@@ -337,7 +315,14 @@ def sidebar_and_init() -> tuple:
         st.session_state.special_message2 = ""
         st.session_state.special_message2_shown = True
 
-    return (model, temperature, max_tokens, top_p, region, max_results, audio)
+    return (
+        model,
+        temperature,
+        max_tokens,
+        top_p,
+        region,
+        max_results,
+    )
 
 
 def body(
@@ -682,41 +667,9 @@ if __name__ == "__main__":
     related_questions = None
     current_prompt = None
 
-    all_sidebar_values = sidebar_and_init()
-    audio = all_sidebar_values[-1]
-    sidebar_values = all_sidebar_values[:-1]
+    sidebar_values = sidebar_and_init()
 
-    # ? Audio Input check
-    if st.session_state.use_audio_input and audio:
-
-        if audio is not None and len(audio) > 0:
-            FILE_NAME = "audio.wav"
-            audio.export(FILE_NAME, format="wav")
-            abs_path = os.path.dirname(__file__) + "/" + FILE_NAME
-
-            whisper_client = Groq(
-                api_key=st.session_state.api_key,
-            )
-
-            try:
-                transcription = None
-                with open(abs_path, "rb") as file:
-                    transcription = whisper_client.audio.transcriptions.create(
-                        file=(abs_path, file.read()),
-                        model="whisper-large-v3",
-                    )
-
-                if transcription:
-                    current_prompt = transcription.text
-
-            # ? If some error occurs while processing the audio, then revert back to text input
-            except Exception as e:
-                st.error("An error occurred while processing the audio.")
-                print(e)
-                current_prompt = st.chat_input("Ask me anything!")
-
-    else:
-        current_prompt = st.chat_input("Ask me anything!")
+    current_prompt = st.chat_input("Ask me anything!")
 
     if current_prompt:
         main_cols = st.columns([0.6, 0.4])
