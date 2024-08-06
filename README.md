@@ -10,17 +10,18 @@ Engage in a lightning-fast chat experience with Fast-Chat, leveraging the capabi
 
 [![Gemma Model](https://img.shields.io/badge/Gemma_Model-Open_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-Open_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-Open_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Fast_Inference_Engine-black)](https://wow.groq.com/why-groq/)
 
-<img src="utils/images/gemma.webp" width=150>
-<img src="utils/images/llama.webp" width=150>
-<img src="utils/images/mistral_ai_image.jpg" width=150>
-<img src="utils/images/groq.jpg" width=150>
+<div style="display: flex; justify-content: space-around;">
+  <img src="utils/images/gemma.webp" width="150">
+  <img src="utils/images/llama.webp" width="150">
+  <img src="utils/images/mistral_ai_image.jpg" width="150">
+  <img src="utils/images/groq.jpg" width="150">
+</div>
 
 ## Key Functionalities
 
 - [x] ⚡**Real-Time Responses**: Experience near-instantaneous responses to your queries, facilitating a seamless conversation flow.
 - [x] 🔍 **Web Search Integration**: Fast-Chat can search the web for information and provide you with relevant results.
 - [x] 📺 **YouTube Comprehension**: Fast-Chat possesses the ability to understand and potentially respond to content from YouTube videos and shorts.
-- [x] 🎙️ **Voice Recognition**: Implement voice recognition functionality to enable voice-based interactions.
 - [x] ✨ **Interactive Interface**: Enjoy a user-friendly and intuitive chat interface for a smooth interaction.
 - [x] 📝 **Contextual Awareness**: Fast-Chat maintains conversational context, enabling it to provide more relevant and engaging responses.
 - [x] 🤖 **Model Selection**: Choose from a variety of models to tailor the chat experience to your specific needs.
@@ -38,6 +39,12 @@ Engage in a lightning-fast chat experience with Fast-Chat, leveraging the capabi
 ### Installation
 
 1. Clone the repository
+
+```sh
+git clone https://github.com/sayan10rakshit/Fast-Chat.git
+cd Fast-Chat
+```
+
 2. Install the required dependencies using `pipenv`/`venv`:
 
 ```sh
@@ -84,8 +91,9 @@ pip install -r requirements.txt
     deactivate
     ```
 
-## Future Enhancements
+## Coming Soon
 
+- [ ] **Voice Recognition**: Implement voice recognition functionality to enable voice-based interactions.
 - [ ] **Multi-Modal Support**: Incorporate support for multi-modal interactions, including text, images, and videos.
 - [ ] **Multi-Language Support**: Extend support for multiple languages to cater to a diverse user base.
 - [ ] **User Profiling**: Implement user profiling to personalize the chat experience and responses.
