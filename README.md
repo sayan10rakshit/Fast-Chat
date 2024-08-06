@@ -69,14 +69,14 @@ pip install -r requirements.txt
 🚨 **NOTE**: If you are facing any error/s try using `python` instead of `python3` in the above commands  
 
 <details>
-  <summary><img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows" /> </summary>
+<summary><img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows" /></summary>
 
-  ```powershell
-  # Using venv
-  python3 -m venv .env_for_fast_chat
-  .env_for_fast_chat\Scripts\Activate.ps1
-  pip install -r requirements.txt
-  ```
+```powershell
+# Using venv
+python3 -m venv .env_for_fast_chat
+.env_for_fast_chat\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
 
   🚨 **NOTE**: If you are facing any error/s try using `python` instead of `python3` in the above commands  
 </details>
@@ -121,20 +121,21 @@ pip install -r requirements.txt
       deactivate
       ```
 
-       <details>
-         <summary><img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows"/></summary>
+      <details>
+      <summary><img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows" /></summary>
 
-          ```powershell
-          # Activate the virtual environment
-          .env_for_fast_chat\Scripts\Activate.ps1
-          streamlit run app.py
-          ```
+      ```powershell
+      # Activate the virtual environment
+      .env_for_fast_chat\Scripts\Activate.ps1
+      streamlit run app.py
+      ```
 
-          ```powershell
-          # Deactivate the virtual environment after using Fast-Chat
-          deactivate
-          ```
-        </details>
+      ```powershell
+      # Deactivate the virtual environment after using Fast-Chat
+      deactivate
+      ```
+
+      </details>
 
 - When the app is running, use Fast-Chat in your browser at `http://localhost:8501`
 
