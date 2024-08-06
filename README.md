@@ -66,9 +66,10 @@ source .env_for_fast_chat/bin/activate
 pip install -r requirements.txt
 ```
 
-![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+🚨 **NOTE**: If you are facing any error/s try using `python` instead of `python3` in the above commands  
+
 <details>
-  <summary> For Windows users ![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white) </summary>
+  <summary><img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows" /> </summary>
 
   ```powershell
   # Using venv
@@ -120,18 +121,20 @@ pip install -r requirements.txt
       deactivate
       ```
 
-       ![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+       <details>
+         <summary><img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows"/></summary>
 
-      ```powershell
-      # Activate the virtual environment
-      .env_for_fast_chat\Scripts\Activate.ps1
-      streamlit run app.py
-      ```
+          ```powershell
+          # Activate the virtual environment
+          .env_for_fast_chat\Scripts\Activate.ps1
+          streamlit run app.py
+          ```
 
-      ```powershell
-      # Deactivate the virtual environment after using Fast-Chat
-      deactivate
-      ```
+          ```powershell
+          # Deactivate the virtual environment after using Fast-Chat
+          deactivate
+          ```
+        </details>
 
 - When the app is running, use Fast-Chat in your browser at `http://localhost:8501`
 
