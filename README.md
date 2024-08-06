@@ -61,19 +61,24 @@ pipenv install
 
 ```sh
 # Using venv
-python -m venv .env_for_fast_chat
+python3 -m venv .env_for_fast_chat
 source .env_for_fast_chat/bin/activate
 pip install -r requirements.txt
 ```
 
 ![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+<details>
+  <summary> For Windows users ![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white) </summary>
 
-```powershell
-# Using venv
-python -m venv .env_for_fast_chat
-.env_for_fast_chat\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
+  ```powershell
+  # Using venv
+  python3 -m venv .env_for_fast_chat
+  .env_for_fast_chat\Scripts\Activate.ps1
+  pip install -r requirements.txt
+  ```
+
+  🚨 **NOTE**: If you are facing any error/s try using `python` instead of `python3` in the above commands  
+</details>
 
 ## Usage
 
