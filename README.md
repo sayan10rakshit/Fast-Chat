@@ -55,7 +55,7 @@ cd Fast-Chat
 pipenv install
 ```
 
-##### OR
+**OR**
   
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)![macOS](<https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0>)
 
@@ -86,7 +86,7 @@ pip install -r requirements.txt
     pipenv run streamlit run app.py
     ```
 
-##### OR
+    **OR**
 
     ```sh
     # Activate the virtual environment
@@ -100,31 +100,31 @@ pip install -r requirements.txt
     ```
 
   - With `venv`
-  ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)![macOS](<https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0>)
+    ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)![macOS](<https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0>)
 
-    ```sh
-    # Activate the virtual environment
-    source .env_for_fast_chat/bin/activate
-    streamlit run app.py
-    ```
+      ```sh
+      # Activate the virtual environment
+      source .env_for_fast_chat/bin/activate
+      streamlit run app.py
+      ```
 
-    ```sh
-    # Deactivate the virtual environment after using Fast-Chat
-    deactivate
-    ```
+      ```sh
+      # Deactivate the virtual environment after using Fast-Chat
+      deactivate
+      ```
 
-    ![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+      ![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
 
-    ```powershell
-    # Activate the virtual environment
-    .env_for_fast_chat\Scripts\Activate.ps1
-    streamlit run app.py
-    ```
+      ```powershell
+      # Activate the virtual environment
+      .env_for_fast_chat\Scripts\Activate.ps1
+      streamlit run app.py
+      ```
 
-    ```powershell
-    # Deactivate the virtual environment after using Fast-Chat
-    deactivate
-    ```
+      ```powershell
+      # Deactivate the virtual environment after using Fast-Chat
+      deactivate
+      ```
 
 - When the app is running, use Fast-Chat in your browser at `http://localhost:8501`
 
