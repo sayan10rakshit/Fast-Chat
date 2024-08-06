@@ -1,12 +1,12 @@
 # Fast-Chat⚡
 
-### Powered by GROQ's Language Processing Unit
+### An AI chat assistant for Lightning-Fast Conversations
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://fast-chat.streamlit.app/)
 
-Engage in a lightning-fast chat experience with Fast-Chat, leveraging the capabilities of GROQ's cutting-edge Language Processing Unit ([GROQ LPU<sup>TM</sup>](https://wow.groq.com/why-groq/)). Interact with Fast-Chat and receive immediate responses to your inquiries.
+Engage in a lightning-fast chat experience with **Fast-Chat**, leveraging the capabilities of **GROQ**'s cutting-edge **Language Processing Unit** (**[GROQ LPU<sup>TM</sup>](https://wow.groq.com/why-groq/)**). Interact with Fast-Chat and receive immediate responses to your inquiries.
 
-##### Powered by
+#### Powered by
 
 [![Gemma Model](https://img.shields.io/badge/Gemma_Model-Open_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-Open_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-Open_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Fast_Inference_Engine-black)](https://wow.groq.com/why-groq/)
 
@@ -32,6 +32,7 @@ Engage in a lightning-fast chat experience with Fast-Chat, leveraging the capabi
 ### Prerequisites
 
 - **`Python 3.8`** or higher
+- **`git`**
 - **`pipenv`** (recommended)
 - [🔗GROQ API key](https://console.groq.com/keys)
 - [🔗SerpAPI key](https://serpapi.com/dashboard) (optional)
@@ -47,12 +48,16 @@ cd Fast-Chat
 
 2. Install the required dependencies using `pipenv`/`venv`:
 
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)![macOS](<https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0>)![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+
 ```sh
 # Using pipenv
 pipenv install
 ```
 
-OR
+##### OR
+  
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)![macOS](<https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0>)
 
 ```sh
 # Using venv
@@ -61,35 +66,67 @@ source .env_for_fast_chat/bin/activate
 pip install -r requirements.txt
 ```
 
+![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+
+```powershell
+# Using venv
+python -m venv .env_for_fast_chat
+.env_for_fast_chat\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
 ## Usage
 
 - Launch with Streamlit:
   - With `pipenv`
+  ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)![macOS](<https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0>)![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
 
     ```sh
     # You can run without activating the virtual environment
     pipenv run streamlit run app.py
     ```
 
-    OR
+##### OR
 
     ```sh
     # Activate the virtual environment
     pipenv shell
     streamlit run app.py
+    ```
+
+    ```sh
     # Deactivate the virtual environment after using Fast-Chat
     deactivate
     ```
 
   - With `venv`
+  ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)![macOS](<https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0>)
 
     ```sh
     # Activate the virtual environment
     source .env_for_fast_chat/bin/activate
     streamlit run app.py
+    ```
+
+    ```sh
     # Deactivate the virtual environment after using Fast-Chat
     deactivate
     ```
+
+    ![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+
+    ```powershell
+    # Activate the virtual environment
+    .env_for_fast_chat\Scripts\Activate.ps1
+    streamlit run app.py
+    ```
+
+    ```powershell
+    # Deactivate the virtual environment after using Fast-Chat
+    deactivate
+    ```
+
+- When the app is running, use Fast-Chat in your browser at `http://localhost:8501`
 
 ## Coming Soon
 
