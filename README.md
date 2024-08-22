@@ -2,7 +2,7 @@
 
   <h1 style="margin: 0;">⚡ Fast-Chat</h1>
   
-  <img src="utils/static/Fast-Chat_avatar.gif" alt="Fast-Chat" width="250" style="margin-left: 5px;" />
+  <img src="utils/static/Fast-Chat_avatar.gif" alt="Fast-Chat" width="100" style="margin-left: 5px;" />
 
 </div>
 
