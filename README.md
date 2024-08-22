@@ -2,7 +2,7 @@
 
   <h1 style="margin: 0;">⚡ Fast-Chat</h1>
   
-  <img src="utils/static/Fast-Chat_avatar.gif" alt="Fast-Chat" width="300" style="margin-left: 5px;" />
+  <img src="utils/static/Fast-Chat_avatar.gif" alt="Fast-Chat" width="250" style="margin-left: 5px;" />
 
 </div>
 
@@ -21,10 +21,10 @@ Engage in a lightning-fast chat conversation with **Fast-Chat**, leveraging the 
 </div>
 
 <div style="display: flex; justify-content: space-around;">
-  <img src="utils/static/gemma.webp" width="200">
-  <img src="utils/static/llama.webp" width="200">
-  <img src="utils/static/mistral_ai_image.jpg" width="200">
-  <img src="utils/static/elevenlabs.jpg" width=200>
+  <img src="utils/static/gemma.webp" width="200" height="100">
+  <img src="utils/static/llama.webp" width="200" height="100">
+  <img src="utils/static/mistral_ai_image.jpg" width="200" height="100">
+  <img src="utils/static/elevenlabs.jpg" width=200 height="100">
 </div>
 
 ## Key Functionalities
