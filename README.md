@@ -24,7 +24,7 @@ Engage in a lightning-fast chat conversation with **Fast-Chat**, leveraging the 
   <img src="utils/static/gemma.webp" width="200" height="100">
   <img src="utils/static/llama.webp" width="200" height="100">
   <img src="utils/static/mistral_ai_image.jpg" width="200" height="100">
-  <img src="utils/static/elevenlabs.jpg" width=200 height="100">
+  <img src="utils/static/elevenlabs.jpg" width="200" height="100">
 </div>
 
 ## Key Functionalities
