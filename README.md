@@ -16,7 +16,7 @@ Engage in a lightning-fast chat conversation with **Fast-Chat**, leveraging the 
 
 [![Gemma Model](https://img.shields.io/badge/Gemma_Model-Open_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-Open_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-Open_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Fast_Inference_Engine-black)](https://wow.groq.com/why-groq/) [![Eleven Labs](https://img.shields.io/badge/ElevenLabs-Voice_Synthesis-green)](https://elevenlabs.io/)
 
-<div style="display: flex; justify-content: space-around;">
+<div style="display: flex; justify-content: center;">
   <img src="utils/static/groq.jpg" width="200">
 </div>
 
