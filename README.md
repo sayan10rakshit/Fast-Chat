@@ -1,20 +1,30 @@
-# Fast-Chat⚡
+<div style="display: flex; justify-content: space-between; align-items: center;">
+
+  <h1 style="margin: 0;">⚡ Fast-Chat</h1>
+  
+  <img src="utils/static/Fast-Chat_avatar.gif" alt="Fast-Chat" width="300" style="margin-left: 5px;" />
+
+</div>
 
 ### An AI chat assistant for Lightning-Fast Conversations
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://fast-chat.streamlit.app/)
 
-Engage in a lightning-fast chat experience with **Fast-Chat**, leveraging the capabilities of **GROQ**'s cutting-edge **Language Processing Unit** (**[GROQ LPU<sup>TM</sup>](https://wow.groq.com/why-groq/)**). Interact with Fast-Chat and receive immediate responses to your inquiries.
+Engage in a lightning-fast chat conversation with **Fast-Chat**, leveraging the capabilities of **GROQ**'s cutting-edge **Language Processing Unit** (**[GROQ LPU<sup>TM</sup>](https://wow.groq.com/why-groq/)**). Interact with Fast-Chat and receive immediate responses to your inquiries.
 
 #### Powered by
 
-[![Gemma Model](https://img.shields.io/badge/Gemma_Model-Open_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-Open_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-Open_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Fast_Inference_Engine-black)](https://wow.groq.com/why-groq/)
+[![Gemma Model](https://img.shields.io/badge/Gemma_Model-Open_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-Open_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-Open_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Fast_Inference_Engine-black)](https://wow.groq.com/why-groq/) [![Eleven Labs](https://img.shields.io/badge/ElevenLabs-Voice_Synthesis-green)](https://elevenlabs.io/)
 
 <div style="display: flex; justify-content: space-around;">
-  <img src="utils/images/gemma.webp" width="200">
-  <img src="utils/images/llama.webp" width="200">
-  <img src="utils/images/mistral_ai_image.jpg" width="200">
-  <img src="utils/images/groq.jpg" width="200">
+  <img src="utils/static/groq.jpg" width="200">
+</div>
+
+<div style="display: flex; justify-content: space-around;">
+  <img src="utils/static/gemma.webp" width="200">
+  <img src="utils/static/llama.webp" width="200">
+  <img src="utils/static/mistral_ai_image.jpg" width="200">
+  <img src="utils/static/elevenlabs.jpg" width=200>
 </div>
 
 ## Key Functionalities
@@ -22,6 +32,8 @@ Engage in a lightning-fast chat experience with **Fast-Chat**, leveraging the ca
 - [x] ⚡**Real-Time Responses**: Experience near-instantaneous responses to your queries, facilitating a seamless conversation flow.
 - [x] 🔍 **Web Search Integration**: Fast-Chat can search the web for information and provide you with relevant results.
 - [x] 📺 **YouTube Comprehension**: Fast-Chat possesses the ability to understand and potentially respond to content from YouTube videos and shorts.
+- [x] 🎙️ **Voice Recognition**: Fast-Chat can listen to you and comprehend your queries
+- [x] 🗣️ **Audio Output**: Fast-Chat can talk back to you.
 - [x] ✨ **Interactive Interface**: Enjoy a user-friendly and intuitive chat interface for a smooth interaction.
 - [x] 📝 **Contextual Awareness**: Fast-Chat maintains conversational context, enabling it to provide more relevant and engaging responses.
 - [x] 🤖 **Model Selection**: Choose from a variety of models to tailor the chat experience to your specific needs.
@@ -36,6 +48,7 @@ Engage in a lightning-fast chat experience with **Fast-Chat**, leveraging the ca
 - **`pipenv`** (recommended)
 - [🔗GROQ API key](https://console.groq.com/keys)
 - [🔗SerpAPI key](https://serpapi.com/dashboard) (optional)
+- [🔗ElevenLabs API key](https://elevenlabs.io/app/speech-synthesis/text-to-speech) (optional)
 
 ### Installation
 
@@ -141,7 +154,7 @@ pip install -r requirements.txt
 
 ## Coming Soon
 
-- [ ] **Voice Recognition**: Implement voice recognition functionality to enable voice-based interactions.
+- [ ] **Image Generation**: Implement image generation capabilities to Fast-Chat.
 - [ ] **Multi-Modal Support**: Incorporate support for multi-modal interactions, including text, images, and videos.
 - [ ] **Multi-Language Support**: Extend support for multiple languages to cater to a diverse user base.
 - [ ] **User Profiling**: Implement user profiling to personalize the chat experience and responses.
