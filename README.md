@@ -1,10 +1,6 @@
-<div style="display: flex; justify-content: space-between; align-items: center;">
-
-  <h1 style="margin: 0;">⚡ Fast-Chat</h1>
+# ⚡Fast-Chat
   
-  <img src="utils/static/Fast-Chat_avatar.gif" alt="Fast-Chat" width="100" style="margin-left: 5px;" />
-
-</div>
+<img src="utils/static/Fast-Chat_avatar.gif" alt="Fast-Chat" width="400">
 
 ### An AI chat assistant for Lightning-Fast Conversations
 
@@ -17,11 +13,11 @@ Engage in a lightning-fast chat conversation with **Fast-Chat**, leveraging the 
 [![Gemma Model](https://img.shields.io/badge/Gemma_Model-OS_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-OS_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-OS_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Inference_Service-black)](https://wow.groq.com/why-groq/) [![Eleven Labs](https://img.shields.io/badge/ElevenLabs-Voice_Synthesis-green)](https://elevenlabs.io/)
 
 <div style="display: flex; justify-content: space-around;">
-  <img src="utils/static/groq.jpg" width="160" height="90">
-  <img src="utils/static/gemma.webp" width="160" height="90">
-  <img src="utils/static/llama.webp" width="160" height="90">
-  <img src="utils/static/mistral_ai_image.jpg" width="160" height="90">
-  <img src="utils/static/elevenlabs.jpg" width="160" height="90">
+  <img src="utils/static/groq.jpg" alt="groq image" width="160" height="90">
+  <img src="utils/static/gemma.webp" alt="gemma image" width="160" height="90">
+  <img src="utils/static/llama.webp" alt="llama image" width="160" height="90">
+  <img src="utils/static/mistral_ai_image.jpg" alt="mistral image" width="160" height="90">
+  <img src="utils/static/elevenlabs.jpg" alt="elevenlabs image" width="160" height="90">
 </div>
 
 ## Key Functionalities
