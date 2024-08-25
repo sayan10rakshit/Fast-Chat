@@ -80,7 +80,7 @@ pip install -r requirements.txt
 ```powershell
 # Using venv
 python3 -m venv .env_for_fast_chat
-.env_for_fast_chat\Scripts\Activate.ps1
+.env_for_fast_chat\Scripts\Activate
 pip install -r requirements.txt
 ```
 
@@ -132,7 +132,7 @@ pip install -r requirements.txt
 
       ```powershell
       # Activate the virtual environment
-      .env_for_fast_chat\Scripts\Activate.ps1
+      .env_for_fast_chat\Scripts\Activate
       streamlit run app.py
       ```
 
@@ -148,6 +148,5 @@ pip install -r requirements.txt
 ## Coming Soon
 
 - [ ] **Image Generation**: Implement image generation capabilities to Fast-Chat.
-- [ ] **Multi-Modal Support**: Incorporate support for multi-modal interactions, including text, images, and videos.
-- [ ] **Multi-Language Support**: Extend support for multiple languages to cater to a diverse user base.
-- [ ] **User Profiling**: Implement user profiling to personalize the chat experience and responses.
+- [ ] **Agentic Search**: Gives more comprehensive search results to ambiguous queries.
+- [ ] **Map Integration**: Integrate maps to provide location-based information.
