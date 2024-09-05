@@ -147,6 +147,7 @@ pip install -r requirements.txt
 
 ## Coming Soon
 
+- [ ] **Multi-Modal Integration**: Incorporate multi-modal capabilities to enhance the user experience.
 - [ ] **Image Generation**: Implement image generation capabilities to Fast-Chat.
 - [ ] **Agentic Search**: Gives more comprehensive search results to ambiguous queries.
 - [ ] **Map Integration**: Integrate maps to provide location-based information.

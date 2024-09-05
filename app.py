@@ -17,15 +17,51 @@ from utils.get_web_results import search_the_web, REGIONS
 from utils.get_web_results_serp import get_web_results
 from utils.get_location import find_closest_match
 
+voice_name_to_id = {
+    "Jessica": {"id": "cgSgspJ2msm6clMCkdW9", "type": "Conversational"},
+    "Matilda": {"id": "XrExE9yKIg1WjnnlVkGX", "type": "Narration"},
+    "Lily": {"id": "pFZP5JQG7iQjIQuC4Bku", "type": "Narration"},
+    "Alice": {"id": "Xb7hH8MSUJpSbSDYk0k2", "type": "News"},
+    "Brian": {"id": "nPczCjzI2devNBz1zQrb", "type": "Narration"},
+    "Charlie": {"id": "IKne3meq5aSn9XLyUdCD", "type": "Conversational"},
+    "Charlotte": {"id": "XB0fDUnXU5powFXDhCwa", "type": "Characters"},
+    "Daniel": {"id": "onwK4e9ZLuTAKqWW03F9", "type": "News"},
+    "Dorothy": {"id": "ThT5KcBeYPX3keUQqHPh", "type": "Narration"},
+    "Elli": {"id": "MF3mGyEYCl7XYWbV9V6O", "type": "Narration"},
+    "Emily": {"id": "LcfcDJNUP1GQjkzn1xUU", "type": "Meditation"},
+    "Fin": {"id": "D38z5RcWu1voky8WS1ja", "type": "Characters"},
+    "Freya": {"id": "jsCqWAovK2LkecY7zXl4", "type": "Characters"},
+    "George": {"id": "JBFqnCBsd6RMkjVDRZzb", "type": "Narration"},
+    "Glinda": {"id": "z9fAnlkpzviPz146aGWa", "type": "Characters"},
+    "Laura": {"id": "FGY2WhTYpPnrIDTdsKH5", "type": "Social Media"},
+    "Michael": {"id": "flq6f7yk4E4fJM5XTYuZ", "type": "Narration"},
+    "Nicole": {"id": "piTKgcLEGmPE4e6mEKli", "type": "ASMR"},
+    "Ethan": {"id": "g5CIjZEefAph4nQFvHAz", "type": "ASMR"},
+}
 
-def text_to_speech_file(text: str, api_key: str) -> str:
+
+def text_to_speech_file(
+    text: str, api_key: str, voice_name: str = "Lily (Narration)"
+) -> str:
+    """
+    Generates an audio file from the given text using the ElevenLabs API.
+
+    Args:
+        text (str): The text to convert to speech.
+        api_key (str): The ElevenLabs API key.
+        voice_name (str, optional): The name of the voice to use. Defaults to "Lily (Narration)".
+
+    Returns:
+        str: The path to the generated audio file.
+    """
+
+    voice_id = voice_name_to_id[voice_name.split(" ")[0]]["id"]
+
     client = ElevenLabs(
         api_key=api_key,
     )
     response = client.text_to_speech.convert(
-        # voice_id="cgSgspJ2msm6clMCkdW9",  # Jessica
-        # voice_id="XrExE9yKIg1WjnnlVkGX", # Matilda
-        voice_id="pFZP5JQG7iQjIQuC4Bku",  # Lily
+        voice_id=voice_id,
         output_format="mp3_22050_32",
         text=text,
         model_id="eleven_turbo_v2_5",
@@ -48,11 +84,27 @@ def text_to_speech_file(text: str, api_key: str) -> str:
 
 
 # Async wrapper to run text_to_speech_file in a separate thread
-async def generate_audio_async(text: str) -> str:
+async def generate_audio_async(text: str, voice_name: str) -> str:
+    """
+    Generate audio from text using the ElevenLabs API.
+
+    This is an async wrapper for the text_to_speech_file function.
+
+    Args:
+        text (str): The text to convert to speech.
+        voice_name (str): The name of the voice to use.
+
+    Returns:
+        str: The path to the generated audio file.
+    """
     loop = asyncio.get_event_loop()
     with ThreadPoolExecutor() as pool:
         audio_file_path = await loop.run_in_executor(
-            pool, text_to_speech_file, text, st.session_state.elevenlabs_api_key
+            pool,
+            text_to_speech_file,
+            text,
+            st.session_state.elevenlabs_api_key,
+            voice_name,
         )
     return audio_file_path
 
@@ -78,6 +130,152 @@ def handle_toggle(toggle_name: str) -> None:
         st.session_state.use_you_tube = False
 
 
+def show_media(
+    role="assistant",
+    model_output=None,
+    img_links=None,
+    video_links=None,
+    MARKDOWN_PLACEHOLDER=None,
+    audio_file_path=None,
+    related_questions=None,
+) -> (
+    None
+):  #! This will only be executed (display the media content/s) if either YouTube or Web search is enabled
+    """
+    This is a function to display all the media contents.
+
+    - Displays prompts/responses.
+    - If YouTube integration is enabled, it displays the YouTube video/shorts.
+    - If web search integration is enabled, it displays relevant images, videos, references, and related questions.
+
+    Args:
+        role (str, optional): The role of the speaker. Defaults to "assistant".
+        img_links (list, optional): All the image links extracted from the search results. Defaults to None.
+        video_links (list, optional): All the video links extracted from the search results. Defaults to None.
+        MARKDOWN_PLACEHOLDER (str, optional): The list of web search references. Defaults to None.
+        audio_file_path (str, optional): The path to the audio file generated from the model response. Defaults to None.
+        related_questions (list, optional): The list of related questions extracted from the search results. Defaults to None.
+    """
+
+    # ? YOUTUBE VIDEO/SHORTS RESULTS after model response
+    # Display the YouTube video/shorts after the response
+    main_cols = st.columns([0.6, 0.4])
+
+    if model_output is not None:
+        with main_cols[0]:
+            # write model output
+            with st.chat_message(role):
+                st.markdown(model_output)
+
+            if audio_file_path and st.session_state.use_audio_output:
+                st.audio(
+                    audio_file_path,
+                    format="audio/mp3",
+                    autoplay=True,
+                )
+
+        with main_cols[1]:
+            # ? WEB SEARCH RESULTS after model response
+            # ? Display the images
+
+            if img_links is not None:
+                st.caption("**Images from the web**")
+                cols_img = st.columns(3)
+                pics_to_show = 3 if len(img_links) > 3 else len(img_links)
+
+                # Show the initial set of images
+                for idx, img_link in enumerate(img_links[:pics_to_show]):
+                    with cols_img[idx % 3]:
+                        st.image(img_link, use_column_width="auto")
+
+                # Show additional images under the expander if there are any
+                if len(img_links) > pics_to_show:
+                    with st.expander("View more images"):
+                        more_cols = st.columns(3)
+                        for idx, img_link in enumerate(img_links[pics_to_show:]):
+                            with more_cols[idx % 3]:
+                                st.image(
+                                    img_link,
+                                    use_column_width="auto",
+                                )
+
+            # ? Display the videos
+            if video_links is not None:
+                if len(video_links) == 1:
+                    st.caption("**Video from the web**")
+                    try:
+                        st.video(video_links[0][0], start_time=0)
+                    except Exception as e:
+                        print(e)
+                if len(video_links) > 1:
+                    st.caption("**Videos from the web**")
+                    cols_vids = st.columns(2)
+                    videos_to_show = 2 if len(video_links) > 2 else len(video_links)
+                    for idx, (video_link, _) in enumerate(video_links[:videos_to_show]):
+                        with cols_vids[idx % 2]:
+                            try:
+                                st.video(video_link, start_time=0)
+                            except Exception as e:
+                                print(e)
+                    # Show additional videos under the expander if there are any
+                    if len(video_links) > videos_to_show:
+                        with st.expander("View more videos"):
+                            more_cols = st.columns(2)
+                            for idx, (video_link, _) in enumerate(
+                                video_links[videos_to_show:]
+                            ):
+                                with more_cols[idx % 2]:
+                                    try:
+                                        st.video(video_link, start_time=0)
+                                    except Exception as e:
+                                        print(e)
+
+            if MARKDOWN_PLACEHOLDER is not None:
+                with st.expander("Sources from the web"):
+                    st.markdown(MARKDOWN_PLACEHOLDER)
+
+        # ? Display additional related questions and their results
+        if related_questions is not None:
+            st.markdown("### Related Questions")
+            for question in related_questions:
+                with st.expander(question["question"]):
+                    if "thumbnail" in question:
+                        if "title" in question:
+                            st.markdown(f"**{question['title']}**")
+                        col1, col2 = st.columns([1, 5])
+                        if "thumbnail" in question:
+                            col2.image(question["thumbnail"])
+                        if "snippet" in question:
+                            col1.write(question["snippet"])
+                        if "link" in question:
+                            if "source_logo" in question:
+                                # Show the source logo inside markdown just before the link
+                                col1.markdown(
+                                    f"![source]({question['source_logo']})  [{question['displayed_link']}]({question['link']})"
+                                )
+                            else:
+                                col1.markdown(
+                                    f"[{question['displayed_link']}]({question['link']})"
+                                )
+                    else:
+                        if "title" in question:
+                            st.markdown(f"**{question['title']}**")
+                        if "snippet" in question:
+                            st.write(question["snippet"])
+                        if "link" in question:
+                            if "source_logo" in question:
+                                # Show the source logo inside markdown just before the link
+                                st.markdown(
+                                    f"![source]({question['source_logo']})  [{question['displayed_link']}]({question['link']})"
+                                )
+                            else:
+                                st.markdown(
+                                    f"[{question['displayed_link']}]({question['link']})"
+                                )
+
+        # TODO: Also give maps result
+
+
 def sidebar_and_init() -> tuple:
     """
     Defines the sidebar and initializes the session state variables.
@@ -99,21 +297,30 @@ def sidebar_and_init() -> tuple:
     region = None
     max_results = None
     audio_data = None
-    rerun_param = False
 
     # ! Declaring all the session state variables
 
+    if "fast_chat_instructions" not in st.session_state:
+        st.session_state.fast_chat_instructions = """
+        CONFIDENTIAL INFO, do not share with anyone.
+        You are Fast Chat, a powerful AI assistant that can help you with a variety of tasks.
+        You can: 
+        1) Summarize YouTube videos/shorts having English subtitles if the user just provides the link.
+        2) Conduct a web search and include latest information in the response.
+        3) Listen to the user via audio input and respond with audio output.        
+        """
+
     if "messages" not in st.session_state:
         st.session_state.messages = []
+
+    if "display_message" not in st.session_state:
+        st.session_state.display_message = []
 
     if "groq_api_key" not in st.session_state:
         st.session_state.groq_api_key = ""
 
     if "is_groq_api_key_valid" not in st.session_state:
         st.session_state.is_groq_api_key_valid = False
-
-    if "remove_unnecessary_messages" not in st.session_state:
-        st.session_state.remove_unnecessary_messages = False
 
     if "page_reload_count" not in st.session_state:
         st.toast("Enter your GROQ API key to get started", icon="⚡")
@@ -129,10 +336,26 @@ def sidebar_and_init() -> tuple:
             ]
         )
         st.session_state.page_reload_count = 0
-        st.session_state.messages.append(
+
+        st.session_state.display_message.append(
             {
                 "role": "assistant",
                 "content": placeholder_messages,
+                "media": {
+                    "audio_file_path": None,
+                    # "all_yt_links": None,
+                    "img_links": None,
+                    "video_links": None,
+                    "MARKDOWN_PLACEHOLDER": None,
+                    "related_questions": None,
+                },
+            }
+        )
+
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": st.session_state.fast_chat_instructions,
             }
         )
 
@@ -144,6 +367,9 @@ def sidebar_and_init() -> tuple:
 
     if "use_audio_output" not in st.session_state:
         st.session_state.use_audio_output = False
+
+    if "voice_name" not in st.session_state:
+        st.session_state.voice_name = "Lily (Narration)"
 
     if "st.session_state.audio_file_path" not in st.session_state:
         st.session_state.audio_file_path = None
@@ -180,8 +406,6 @@ def sidebar_and_init() -> tuple:
         1  # will be incremented each time streamlit reruns the script
     )
 
-    if "all_yt_links" not in st.session_state:
-        st.session_state.all_yt_links = []
     if "img_links" not in st.session_state:
         st.session_state.img_links = []
     if "video_links" not in st.session_state:
@@ -204,11 +428,17 @@ def sidebar_and_init() -> tuple:
     st.markdown("# Fast Chat ⚡")
     st.markdown("by **[Sayan Rakshit](https://github.com/sayan10rakshit/Fast-Chat)**")
 
-    for message in st.session_state.messages:
-        chat_column, _ = st.columns([0.6, 0.4])
-        with chat_column:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+    #! Iterate over the messages and display them
+    for message in st.session_state.display_message:
+        show_media(
+            role=message["role"],
+            model_output=message["content"],
+            img_links=message["media"]["img_links"],
+            video_links=message["media"]["video_links"],
+            MARKDOWN_PLACEHOLDER=message["media"]["MARKDOWN_PLACEHOLDER"],
+            audio_file_path=message["media"]["audio_file_path"],
+            related_questions=message["media"]["related_questions"],
+        )
 
     with st.sidebar:
         #! Only show the input field if the API key is not valid or if some error has occurred
@@ -293,14 +523,14 @@ def sidebar_and_init() -> tuple:
         elif model == "mixtral-8x7b-32768" and st.session_state.use_audio_input:
             max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
         elif (
-            model in ("llama3-70b-8192", "llama-3.1-70b-versatile")
+            model in ("llama-3.1-8b-instant", "llama-3.1-70b-versatile")
             and not st.session_state.use_audio_input
         ):
             max_tokens = st.slider(
                 "Max Tokens", 0, 8000, 1024, help="Max tokens in the response"
             )
         elif (
-            model in ("llama3-70b-8192", "llama-3.1-70b-versatile")
+            model in ("llama3-70b-8192", "llama3-8b-8192")
             and st.session_state.use_audio_input
         ):
             max_tokens = 8192  #! Hardcoded to 8192 for audio input to refrain from sending multiple requests to the API
@@ -393,6 +623,24 @@ def sidebar_and_init() -> tuple:
                     See more details [here](https://elevenlabs.io/)""",
                 )
 
+                _ = st.selectbox(
+                    "Select Voice",
+                    [
+                        f"{agent_name} ({voice_name_to_id[agent_name]['type']})"
+                        for agent_name in voice_name_to_id.keys()
+                    ],
+                    index=2,
+                    key="voice_name",
+                    help="Select the voice for the audio output.",
+                )
+
+        #! Logic to clear the chat history, remove any audio files generated, reinitialize the toggles and reload the page
+        if len(st.session_state.clear_chat_tracker) > 0:
+            if st.session_state.clear_chat_tracker[-1]:
+                st.session_state.use_you_tube = (
+                    False  # ? Un-toggle the YouTube integration
+                )
+
         st.toggle(
             "Use YouTube",
             st.session_state.use_you_tube,
@@ -400,6 +648,13 @@ def sidebar_and_init() -> tuple:
             on_change=handle_toggle,
             args=("use_you_tube",),
         )
+
+        #! Logic to clear the chat history, remove any audio files generated, reinitialize the toggles and reload the page
+        if len(st.session_state.clear_chat_tracker) > 0:
+            if st.session_state.clear_chat_tracker[-1]:
+                st.session_state.search_the_web = (
+                    False  # ? Un-toggle the web search integration
+                )
 
         st.toggle(
             "Search the Web",
@@ -458,10 +713,13 @@ def sidebar_and_init() -> tuple:
                     serpapi_location
                     and serpapi_location != st.session_state.old_user_serpapi_location
                 ):
-                    authentic_serpapi_location = find_closest_match(serpapi_location)
-                    st.success(f"Using location: {authentic_serpapi_location}")
-                    st.session_state.serpapi_location = authentic_serpapi_location
-                    st.session_state.old_user_serpapi_location = serpapi_location
+                    with st.spinner("Finding the closest match for the location..."):
+                        authentic_serpapi_location = find_closest_match(
+                            serpapi_location
+                        )
+                        st.success(f"Using location: {authentic_serpapi_location}")
+                        st.session_state.serpapi_location = authentic_serpapi_location
+                        st.session_state.old_user_serpapi_location = serpapi_location
 
             if max_results >= 20 and model in (
                 "llama3-70b-8192",
@@ -487,10 +745,24 @@ def sidebar_and_init() -> tuple:
             st.session_state.messages = [
                 {
                     "role": "assistant",
-                    "content": "Let's start afresh shall we? 😁",
+                    "content": st.session_state.fast_chat_instructions,
                 }
             ]
-            st.session_state.remove_unnecessary_messages = False
+
+            st.session_state.display_message = [
+                {
+                    "role": "assistant",
+                    "content": "Let's start afresh shall we? 😁",
+                    "media": {
+                        "audio_file_path": None,
+                        "img_links": None,
+                        "video_links": None,
+                        "MARKDOWN_PLACEHOLDER": None,
+                        "related_questions": None,
+                    },
+                }
+            ]
+
             # remove audio.wav from the directory
             if os.path.exists("audio.wav"):
                 os.remove("audio.wav")
@@ -535,7 +807,6 @@ def sidebar_and_init() -> tuple:
         region,
         max_results,
         audio_data,
-        # rerun_param,
     )
 
 
@@ -561,11 +832,12 @@ def body(
         max_results (int, optional): The maximum results to refer from the search. Defaults to None.
 
     Returns:
-        all_yt_links (list): The list of YouTube links extracted from the prompt.
         img_links (list): The list of image links extracted from the search results.
         video_links (list): The list of video links extracted from the search results.
         MARKDOWN_PLACEHOLDER (str): The markdown placeholder for the search results.
         related_questions (list): The list of related questions extracted from the search results.
+        model_output (str): The model response.
+        audio_file_path (str): The path to the audio file generated from the model response.
     """
 
     GENERIC_RESPONSE = "Sorry, that's on me.\nDue to limited hardware resources in \
@@ -573,12 +845,12 @@ def body(
                                     upgrade to a paid plan to get more hard.\n\
                                         Let's start afresh shall we? 😁"
 
-    all_yt_links = None
     img_links = None
     video_links = None
     MARKDOWN_PLACEHOLDER = None
     related_questions = None
     audio_file_path = None
+    model_output = None
 
     if prompt:
         # Add user message to chat history
@@ -598,26 +870,42 @@ def body(
                     api_key=st.session_state.groq_api_key,
                 )
                 st.session_state.messages.append({"role": "user", "content": prompt})
-                # Display user message in chat message container
-                with st.chat_message("user"):
-                    st.markdown(prompt)
+                st.session_state.display_message.append(
+                    {
+                        "role": "user",
+                        "content": prompt,
+                        "media": {
+                            "audio_file_path": None,
+                            # "all_yt_links": None,
+                            "img_links": None,
+                            "video_links": None,
+                            "MARKDOWN_PLACEHOLDER": None,
+                            "related_questions": None,
+                        },
+                    }
+                )
+
+                # ? Display the user message
+                show_media(
+                    role="user",
+                    model_output=prompt,
+                )
 
                 # check if the prompt contains a youtube link and user asked something related to the video
                 prompt_modified_list = None
-                all_yt_links = filter_links(prompt)
-                if all_yt_links and st.session_state.use_you_tube:
+                video_links = filter_links(prompt)
+                if video_links and st.session_state.use_you_tube:
                     with st.spinner("Seeing the YouTube video/shorts..."):
                         prompt_modified_list = prepare_prompt(prompt)
                         if (
                             prompt_modified_list
                         ):  # only add the modified prompt if subtitles were extracted
-                            st.session_state.remove_unnecessary_messages = True  # a flag to remove the modified prompt from the chat history
                             for prompt_modified in prompt_modified_list:
                                 st.session_state.messages.append(
                                     {
                                         "role": "user",
                                         "content": prompt_modified,
-                                    }  # temporarily add the modified prompt to the chat history
+                                    }  # add the modified prompt to the chat history
                                 )
                         # If subtitles were not extracted, then treat the prompt as a normal prompt
 
@@ -661,7 +949,7 @@ def body(
                             )
 
                         if BODY:
-                            st.session_state.remove_unnecessary_messages = True  # a flag to remove the search results from the chat history
+                            # Feed extracted information to the model for the model's reference
                             st.session_state.messages.append(
                                 {
                                     # "role": "user",
@@ -670,98 +958,88 @@ def body(
                                 }  # temporarily add the search results to the chat history
                             )
 
-                # Display assistant response in chat message container
+                # Give some feedback to the user while the model is generating the response
                 with st.spinner(spinner_message):
-                    with st.chat_message("assistant"):
-                        try:
-                            chat_completion = client.chat.completions.create(
-                                model=model,
-                                messages=st.session_state.messages,
-                                temperature=temperature,
-                                max_tokens=max_tokens,
-                                top_p=top_p,
-                            )
+                    try:
+                        chat_completion = client.chat.completions.create(
+                            model=model,
+                            messages=st.session_state.messages,
+                            temperature=temperature,
+                            max_tokens=max_tokens,
+                            top_p=top_p,
+                        )
 
-                            model_output = chat_completion.choices[0].message.content
+                        model_output = chat_completion.choices[0].message.content
 
-                            if (
-                                prompt_modified_list
-                                and st.session_state.remove_unnecessary_messages  # if YouTube subtitles were extracted and the flag is set
-                            ):
-                                # If subtitles were extracted, then remove the modified prompt from the chat history
-                                for _ in range(
-                                    len(prompt_modified_list)
-                                ):  # remove all the modified prompts
-                                    st.session_state.messages.pop()  # last n = len(prompt_modified_list) messages contain the modified prompts
-                                st.session_state.remove_unnecessary_messages = False
-                            elif (
-                                st.session_state.search_the_web
-                                and st.session_state.remove_unnecessary_messages  # if search results were displayed and the flag is set
-                            ):
-                                # If search results were displayed, then remove the search results from the chat history
-                                st.session_state.messages.pop()
-                                st.session_state.remove_unnecessary_messages = False
+                        # Keep track of the model's output for the model's future reference
+                        st.session_state.messages.append(
+                            {
+                                "role": "assistant",
+                                "content": model_output,
+                            }
+                        )
 
-                            # Add assistant response to chat history
-                            #! Previous clean-ups was/were necessary to remove the modified prompt or search results from the chat history
-                            st.session_state.messages.append(
-                                {
-                                    "role": "assistant",
-                                    "content": model_output,
-                                }
-                            )
-
-                            # ? If the model response is generated successfully then remove the GROQ api key input
-                            st.session_state.is_groq_api_key_valid = True
-                            # ? If the user has enabled audio output and the agent has generated a response
-                            # ? then generate audio output
-                            if model_output and st.session_state.use_audio_output:
-                                try:
-                                    # Generate audio output
-                                    with st.spinner("Generating audio..."):
-                                        audio_file_path = asyncio.run(
-                                            generate_audio_async(model_output)
+                        # ? If the model response is generated successfully then remove the GROQ api key input
+                        st.session_state.is_groq_api_key_valid = True
+                        # ? If the user has enabled audio output and the agent has generated a response
+                        # ? then generate audio output
+                        if model_output and st.session_state.use_audio_output:
+                            try:
+                                # Generate audio output
+                                with st.spinner("Generating audio..."):
+                                    audio_file_path = asyncio.run(
+                                        generate_audio_async(
+                                            model_output,
+                                            voice_name=st.session_state.voice_name,
                                         )
-
-                                    # ? If the audio output is generated successfully then remove the ELEVENLABS api key input
-                                    st.session_state.is_elevenlabs_api_key_valid = True
-                                except elevenlabs.core.api_error.ApiError as err:
-                                    if err.status_code == 401:
-                                        st.error(
-                                            "You might have entered an invalid API or have exhausted the maximum quota."
-                                        )
-                                        st.session_state.is_elevenlabs_api_key_valid = (
-                                            False
-                                        )
-                                    else:
-                                        st.error(
-                                            "Something went wrong with audio generation. Please try again later."
-                                        )
-                                        st.session_state.is_elevenlabs_api_key_valid = (
-                                            False
-                                        )
-                                    print(
-                                        "API error, check for the api parameters or the API key"
                                     )
 
-                        except groq.RateLimitError:
-                            if (
-                                prompt_modified_list
-                                and st.session_state.remove_unnecessary_messages
-                            ):
-                                for _ in range(len(prompt_modified_list)):
-                                    st.session_state.messages.pop()
-                                st.session_state.remove_unnecessary_messages = False
-                            st.session_state.messages = []
-                            st.session_state.messages.append(
-                                {
-                                    "role": "assistant",
-                                    "content": "You have exceeded the rate limit.",
-                                }
-                            )
-                            st.write("You have exceeded the rate limit.")
-                            st.session_state.is_groq_api_key_valid = False
-                            print("Rate limit error")
+                                # ? If the audio output is generated successfully then remove the ELEVENLABS api key input
+                                st.session_state.is_elevenlabs_api_key_valid = True
+                            except elevenlabs.core.api_error.ApiError as err:
+                                if err.status_code == 401:
+                                    st.error(
+                                        "You might have entered an invalid API or have exhausted the maximum quota."
+                                    )
+                                    st.session_state.is_elevenlabs_api_key_valid = False
+                                else:
+                                    st.error(
+                                        "Something went wrong with audio generation. Please try again later."
+                                    )
+                                    st.session_state.is_elevenlabs_api_key_valid = False
+                                print(
+                                    "API error, check for the api parameters or the API key"
+                                )
+
+                        #! The user will not see unstructured extracted information dump
+                        #! from the web search/YouTube video/shorts transcript.
+                        #! Only the model responses and accompanying media will be shown to the user
+                        #! Thus keeping the `display_message` list seperate from the `messages` list
+                        st.session_state.display_message.append(
+                            {
+                                "role": "assistant",
+                                "content": model_output,
+                                "media": {
+                                    "audio_file_path": audio_file_path,
+                                    "img_links": img_links,
+                                    "video_links": video_links,
+                                    "MARKDOWN_PLACEHOLDER": MARKDOWN_PLACEHOLDER,
+                                    "related_questions": related_questions,
+                                },
+                            }
+                        )
+
+                    except groq.RateLimitError:
+                        st.session_state.messages = []
+                        st.session_state.messages.append(
+                            {
+                                "role": "assistant",
+                                "content": "The user has exceeded the rate limit.",
+                            }
+                        )
+                        st.write("You have exceeded the rate limit.")
+                        st.session_state.is_groq_api_key_valid = False
+                        print("Rate limit error")
 
             except elevenlabs.core.api_error.ApiError as err:
                 if err.status_code == 401:
@@ -807,7 +1085,6 @@ def body(
                 print(err)
 
     return (
-        all_yt_links,
         img_links,
         video_links,
         MARKDOWN_PLACEHOLDER,
@@ -815,179 +1092,6 @@ def body(
         model_output,
         audio_file_path,
     )
-
-
-def show_media(
-    model_output="",
-    all_yt_links=None,
-    img_links=None,
-    video_links=None,
-    MARKDOWN_PLACEHOLDER=None,
-    audio_file_path=None,
-) -> (
-    None
-):  #! This will only be executed (display the media content/s) if either YouTube or Web search is enabled
-    """
-    Display the YouTube video/shorts and web search results after the model response.
-
-    This function is responsible for displaying the images, videos, and web search references after the model response on the right side of the app.
-    The media content is only displayed for the current prompt and not for the previous prompts.
-
-    Args:
-        all_yt_links (list, optional): All the YouTube links extracted from the prompt. Defaults to None.
-        img_links (list, optional): All the image links extracted from the search results. Defaults to None.
-        video_links (list, optional): All the video links extracted from the search results. Defaults to None.
-        MARKDOWN_PLACEHOLDER (str, optional): The list of web search references. Defaults to None.
-        related_questions (list, optional): The list of related questions extracted from the search results. Defaults to None.
-    """
-
-    # ? YOUTUBE VIDEO/SHORTS RESULTS after model response
-    # Display the YouTube video/shorts after the response
-    main_cols = st.columns([0.6, 0.4])
-
-    with main_cols[0]:
-        # write model output
-        st.markdown(model_output)
-
-        if audio_file_path and st.session_state.use_audio_output:
-            st.audio(
-                audio_file_path,
-                format="audio/mp3",
-                autoplay=True,
-            )
-
-    with main_cols[1]:
-        if (
-            all_yt_links
-            and st.session_state.use_you_tube
-            and all_yt_links[0][
-                1
-            ]  # stored as (link, type) in the list, type is either "video" or "shorts"
-            == "video"  # if the YT content is a shorts, don't display it
-        ):
-            for video_link, _ in all_yt_links:
-                try:
-                    st.video(video_link, start_time=0)
-                except Exception as e:
-                    print(e)
-
-        # ? WEB SEARCH RESULTS after model response
-        # Display the web search references after the response
-        elif st.session_state.search_the_web:
-            # ? Display the images
-
-            if img_links:
-                st.caption("**Images from the web**")
-                cols_img = st.columns(3)
-                pics_to_show = 3 if len(img_links) > 3 else len(img_links)
-
-                # Show the initial set of images
-                for idx, img_link in enumerate(img_links[:pics_to_show]):
-                    with cols_img[idx % 3]:
-                        st.image(img_link, use_column_width="auto")
-
-                # Show additional images under the expander if there are any
-                if len(img_links) > pics_to_show:
-                    with st.expander("View more images"):
-                        more_cols = st.columns(3)
-                        for idx, img_link in enumerate(img_links[pics_to_show:]):
-                            with more_cols[idx % 3]:
-                                st.image(
-                                    img_link,
-                                    use_column_width="auto",
-                                )
-
-            # ? Display the videos
-            if video_links:
-                st.caption("**Videos from the web**")
-                cols_vids = st.columns(2)
-                # if video_links:
-                videos_to_show = 2 if len(video_links) > 2 else len(video_links)
-                # ? SerpApi Integration
-                if (
-                    st.session_state.use_serp_api
-                    and st.session_state.serp_api_key
-                    and st.session_state.serpapi_location
-                ):
-                    for idx, video_link in enumerate(video_links[:videos_to_show]):
-                        with cols_vids[idx % 2]:
-                            try:
-                                st.video(video_link, start_time=0)
-                            except Exception as e:
-                                print(e)
-                    if len(video_links) > videos_to_show:
-                        with st.expander("View more videos"):
-                            more_cols = st.columns(2)
-                            for idx, video_link in enumerate(
-                                video_links[videos_to_show:]
-                            ):
-                                with more_cols[idx % 2]:
-                                    try:
-                                        st.video(video_link, start_time=0)
-                                    except Exception as e:
-                                        print(e)
-                # ? DDG Integration
-                else:
-                    for idx, (video_link, _) in enumerate(video_links[:videos_to_show]):
-                        with cols_vids[idx % 2]:
-                            try:
-                                st.video(video_link, start_time=0)
-                            except Exception as e:
-                                print(e)
-                    # Show additional videos under the expander if there are any
-                    if len(video_links) > videos_to_show:
-                        with st.expander("View more videos"):
-                            more_cols = st.columns(2)
-                            for idx, (video_link, _) in enumerate(
-                                video_links[videos_to_show:]
-                            ):
-                                with more_cols[idx % 2]:
-                                    try:
-                                        st.video(video_link, start_time=0)
-                                    except Exception as e:
-                                        print(e)
-
-            with st.expander("Sources from the web"):
-                st.markdown(MARKDOWN_PLACEHOLDER)
-
-    # ? Display additional related questions and their results
-    if st.session_state.related_questions:
-        st.markdown("### Related Questions")
-        for question in st.session_state.related_questions:
-            with st.expander(question["question"]):
-                if "thumbnail" in question:
-                    if "title" in question:
-                        st.markdown(f"**{question['title']}**")
-                    col1, col2 = st.columns([1, 5])
-                    if "thumbnail" in question:
-                        col2.image(question["thumbnail"])
-                    if "snippet" in question:
-                        col1.write(question["snippet"])
-                    if "link" in question:
-                        if "source_logo" in question:
-                            # Show the source logo inside markdown just before the link
-                            col1.markdown(
-                                f"![source]({question['source_logo']})  [{question['displayed_link']}]({question['link']})"
-                            )
-                        else:
-                            col1.markdown(
-                                f"[{question['displayed_link']}]({question['link']})"
-                            )
-                else:
-                    if "title" in question:
-                        st.markdown(f"**{question['title']}**")
-                    if "snippet" in question:
-                        st.write(question["snippet"])
-                    if "link" in question:
-                        if "source_logo" in question:
-                            # Show the source logo inside markdown just before the link
-                            st.markdown(
-                                f"![source]({question['source_logo']})  [{question['displayed_link']}]({question['link']})"
-                            )
-                        else:
-                            st.markdown(
-                                f"[{question['displayed_link']}]({question['link']})"
-                            )
 
 
 if __name__ == "__main__":
@@ -1000,7 +1104,7 @@ if __name__ == "__main__":
         },
     )
 
-    all_yt_links = None
+    # all_yt_links = None
     img_links = None
     video_links = None
     MARKDOWN_PLACEHOLDER = None
@@ -1008,6 +1112,7 @@ if __name__ == "__main__":
     current_prompt = None
     audio_data = None
     FILE_NAME = "audio.wav"
+    model_output = None
 
     all_sidebar_values = sidebar_and_init()
     audio_data = all_sidebar_values[-1]
@@ -1015,13 +1120,7 @@ if __name__ == "__main__":
     sidebar_values = all_sidebar_values[:-1]
 
     # ? Audio Input check
-    if (
-        st.session_state.use_audio_input
-        and audio_data
-        # and not rerun_param
-        and os.path.exists(FILE_NAME)
-    ):
-        # audio_data = st_audiorec()
+    if st.session_state.use_audio_input and audio_data and os.path.exists(FILE_NAME):
 
         abs_path = os.path.join(os.path.dirname(__file__), FILE_NAME)
 
@@ -1053,33 +1152,32 @@ if __name__ == "__main__":
                     os.remove(abs_path)
                     audio_data = None
 
-    else:  # The default text input
+    else:  # Old good text input when audio input is failing
         current_prompt = st.chat_input("Ask me anything!")
 
     if current_prompt:
         (
-            st.session_state.all_yt_links,
-            st.session_state.img_links,
-            st.session_state.video_links,
-            st.session_state.MARKDOWN_PLACEHOLDER,
-            st.session_state.related_questions,
-            st.session_state.model_output,
-            st.session_state.audio_file_path,
+            img_links,
+            video_links,
+            MARKDOWN_PLACEHOLDER,
+            related_questions,
+            model_output,
+            audio_file_path,
         ) = body(
             current_prompt,
             *sidebar_values,
         )
 
         show_media(
-            st.session_state.model_output,
-            st.session_state.all_yt_links,
-            st.session_state.img_links,
-            st.session_state.video_links,
-            st.session_state.MARKDOWN_PLACEHOLDER,
-            st.session_state.audio_file_path,
+            "assistant",
+            model_output,
+            img_links,
+            video_links,
+            MARKDOWN_PLACEHOLDER,
+            audio_file_path,
+            related_questions,
         )
 
-    if current_prompt:
         st.info(
             "**Fast Chat ocassionally gives misleading responses. Kindly verify the information from reliable sources.**",
             icon="ℹ️",

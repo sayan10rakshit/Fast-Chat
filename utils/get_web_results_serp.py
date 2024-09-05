@@ -4,6 +4,7 @@ from utils.deep_search import fetch_text
 from utils.extract_subs import filter_links
 
 
+# for formatting the search results
 def perform_shallow_search(search_results: dict) -> tuple:
     body = """"""
     markdown_placeholder = """"""
@@ -21,6 +22,7 @@ def perform_shallow_search(search_results: dict) -> tuple:
     return body, markdown_placeholder
 
 
+# for formatting the search results
 def perform_deep_search(search_results: list) -> str:
     body = """"""
     markdown_placeholder = """"""
@@ -127,9 +129,11 @@ def search_the_web(
                 if (
                     len(body_text.split(" ")) > 4500
                 ):  # ? Setting a hard limit of 4500 words, might need to adjust
+                    # ! There is a potential to summarize the text here instead of truncating
+                    # ! Use LLM for summarization
                     body_text = " ".join(body_text.split(" ")[:4500])
                     body_text += """\n<instructions>The above results might contain irrelevant information. Determine the relevance of the information and respond to the user accordingly.
-                    Do not include the text within brackets in your response. </instructions>"""
+                    Do not include the text within tags in your response. </instructions>"""
                 return (
                     body_text,
                     markdown_placeholder,
@@ -139,14 +143,14 @@ def search_the_web(
                 body, markdown_placeholder = perform_shallow_search(search_results)
                 body_text += body
                 body_text += """\n<instructions>The above results might contain irrelevant information. Determine the relevance of the information and respond to the user accordingly.
-                    Do not include the text within brackets in your response. </instructions>"""
+                    Do not include the text within tags in your response. </instructions>"""
                 return body_text, markdown_placeholder, related_questions
         except Exception as e:
             print(e)
             print("Error in deep search. Performing shallow search.")
             body, markdown_placeholder = perform_shallow_search(search_results)
             body_text += """\n<instructions>The above results might contain irrelevant information. Determine the relevance of the information and respond to the user accordingly.
-                    Do not include the text within brackets in your response. </instructions>"""
+                    Do not include the text within tags in your response. </instructions>"""
             return body, markdown_placeholder, related_questions
 
     except Exception as e:
@@ -324,6 +328,6 @@ def get_web_results(
         ).result()
         print("Got the video_links")
         if video_links:
-            yt_links = list(filter(filter_links, video_links))
+            yt_links = filter_links(" ".join(video_links))
 
     return body, img_links, yt_links, markdown_placeholder, related_questions
