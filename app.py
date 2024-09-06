@@ -1,10 +1,13 @@
 import os
 import random
+import base64
+from io import BytesIO
 
 import groq
 from groq import Groq
 from st_audiorec import st_audiorec
 import streamlit as st
+from PIL import Image
 
 import elevenlabs
 from elevenlabs import VoiceSettings
@@ -38,6 +41,10 @@ voice_name_to_id = {
     "Nicole": {"id": "piTKgcLEGmPE4e6mEKli", "type": "ASMR"},
     "Ethan": {"id": "g5CIjZEefAph4nQFvHAz", "type": "ASMR"},
 }
+
+
+#! Text to Speech Function using ElevenLabs API
+#! -------------------------------------------------------------------------------------------------
 
 
 def text_to_speech_file(
@@ -109,6 +116,13 @@ async def generate_audio_async(text: str, voice_name: str) -> str:
     return audio_file_path
 
 
+#! End of Text to Speech Function
+#! -------------------------------------------------------------------------------------------------
+
+#! Toggle Logic
+#! -------------------------------------------------------------------------------------------------
+
+
 # Define a function to handle the toggling logic
 def handle_toggle(toggle_name: str) -> None:
     """
@@ -124,12 +138,72 @@ def handle_toggle(toggle_name: str) -> None:
         st.session_state.search_the_web = False
         st.session_state.use_audio_input = False
         st.session_state.use_audio_output = False
+        st.session_state.show_file_uploader = False
     elif toggle_name == "search_the_web":
         st.session_state.use_you_tube = False
+        st.session_state.show_file_uploader = False
     elif toggle_name == "use_audio_input":
         st.session_state.use_you_tube = False
+        st.session_state.show_file_uploader = False
+    elif toggle_name == "show_file_uploader":
+        st.session_state.use_audio_input = False
+        st.session_state.use_audio_output = False
+        st.session_state.use_you_tube = False
+        st.session_state.search_the_web = False
 
 
+#! End of Toggle Logic
+#! -------------------------------------------------------------------------------------------------
+
+#! Image Processing Functions
+#! -------------------------------------------------------------------------------------------------
+
+
+def safe_open_image(file):
+    MAX_IMAGE_SIZE = (4000, 4000)
+    """Safely open an image file and resize if it's too large."""
+    try:
+        with Image.open(file) as img:
+            # Check if image needs resizing
+            if img.size[0] > MAX_IMAGE_SIZE[0] or img.size[1] > MAX_IMAGE_SIZE[1]:
+                img.thumbnail(MAX_IMAGE_SIZE, Image.LANCZOS)
+            # Convert to RGB if it's not
+            if img.mode not in ("RGB", "L"):
+                img = img.convert("RGB")
+            return img.copy()
+    except Exception as e:
+        st.error(f"Error opening image: {str(e)}")
+        return None
+
+
+def compress_image(image, max_size=(800, 800), quality=85):
+    """Compress and resize the image, handling alpha channel."""
+    img = image.copy()
+    img.thumbnail(max_size, Image.LANCZOS)
+
+    # Convert to RGB if the image has an alpha channel
+    if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
+        background = Image.new("RGB", img.size, (255, 255, 255))
+        background.paste(img, mask=img.split()[3])  # 3 is the alpha channel
+        img = background
+
+    buffered = BytesIO()
+    img.save(buffered, format="JPEG", quality=quality, optimize=True)
+    return Image.open(buffered)
+
+
+def encode_image(image):
+    buffered = BytesIO()
+    image.save(buffered, format="JPEG", quality=85, optimize=True)
+    return base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+
+#! End of Image Processing Functions
+#! -------------------------------------------------------------------------------------------------
+
+
+#! Function to display media content
+#! -------------------------------------------------------------------------------------------------
 def show_media(
     role="assistant",
     model_output=None,
@@ -179,25 +253,35 @@ def show_media(
             # ? Display the images
 
             if img_links is not None:
-                st.caption("**Images from the web**")
-                cols_img = st.columns(3)
-                pics_to_show = 3 if len(img_links) > 3 else len(img_links)
+                if len(img_links) == 1:
+                    st.caption("**Image from the web**")
+                    st.image(img_links[0], use_column_width="auto")
+                elif len(img_links) == 2:
+                    st.caption("**Images from the web**")
+                    cols_img = st.columns(2)
+                    for idx, img_link in enumerate(img_links):
+                        with cols_img[idx % 2]:
+                            st.image(img_link, use_column_width="auto")
+                elif len(img_links) > 2:
+                    st.caption("**Images from the web**")
+                    cols_img = st.columns(3)
+                    pics_to_show = 3 if len(img_links) > 3 else len(img_links)
 
-                # Show the initial set of images
-                for idx, img_link in enumerate(img_links[:pics_to_show]):
-                    with cols_img[idx % 3]:
-                        st.image(img_link, use_column_width="auto")
+                    # Show the initial set of images
+                    for idx, img_link in enumerate(img_links[:pics_to_show]):
+                        with cols_img[idx % 3]:
+                            st.image(img_link, use_column_width="auto")
 
-                # Show additional images under the expander if there are any
-                if len(img_links) > pics_to_show:
-                    with st.expander("View more images"):
-                        more_cols = st.columns(3)
-                        for idx, img_link in enumerate(img_links[pics_to_show:]):
-                            with more_cols[idx % 3]:
-                                st.image(
-                                    img_link,
-                                    use_column_width="auto",
-                                )
+                    # Show additional images under the expander if there are any
+                    if len(img_links) > pics_to_show:
+                        with st.expander("View more images"):
+                            more_cols = st.columns(3)
+                            for idx, img_link in enumerate(img_links[pics_to_show:]):
+                                with more_cols[idx % 3]:
+                                    st.image(
+                                        img_link,
+                                        use_column_width="auto",
+                                    )
 
             # ? Display the videos
             if video_links is not None:
@@ -276,6 +360,10 @@ def show_media(
         # TODO: Also give maps result
 
 
+#! End of Function to display media content
+#! -------------------------------------------------------------------------------------------------
+
+
 def sidebar_and_init() -> tuple:
     """
     Defines the sidebar and initializes the session state variables.
@@ -343,7 +431,6 @@ def sidebar_and_init() -> tuple:
                 "content": placeholder_messages,
                 "media": {
                     "audio_file_path": None,
-                    # "all_yt_links": None,
                     "img_links": None,
                     "video_links": None,
                     "MARKDOWN_PLACEHOLDER": None,
@@ -373,6 +460,11 @@ def sidebar_and_init() -> tuple:
 
     if "st.session_state.audio_file_path" not in st.session_state:
         st.session_state.audio_file_path = None
+
+    if "show_file_uploader" not in st.session_state:
+        st.session_state.show_file_uploader = False
+    if "successfully_ran" not in st.session_state:
+        st.session_state.successfully_ran = False
 
     #! Logic to clear the chat history, remove any audio files generated, reinitialize the toggles and reload the page
     if "clear_chat_tracker" not in st.session_state:
@@ -456,7 +548,39 @@ def sidebar_and_init() -> tuple:
                 See more details [here](https://wow.groq.com/)""",
             )
 
-        if not st.session_state.use_audio_input:
+        if (
+            st.session_state.use_audio_input
+        ):  #! Only the models having lesser parameters are used for audio input
+            model = st.selectbox(
+                "Select Model",
+                [
+                    "gemma2-9b-it",
+                    "gemma-7b-it",
+                    "mixtral-8x7b-32768",
+                    "llama-3.1-8b-instant",
+                    "llama3-8b-8192",
+                ],
+                index=3,
+            )
+        elif (
+            st.session_state.show_file_uploader
+            and st.session_state.page_reload_count == 1
+        ) or (
+            st.session_state.show_file_uploader
+            and not st.session_state.successfully_ran
+        ):
+            #! Use Llava only if one of the following conditions are met
+            #!  - If the user has uploaded a file and this is the first time the page is being loaded OR
+            #!  - If the user has uploaded a file and the model has not successfully run
+            #! Thus if the model has successfully run, then the user has to untoggle and retoggle the file uploader to run the model again
+            model = st.selectbox(
+                "Select Model",
+                [
+                    "llava-v1.5-7b-4096-preview",
+                ],
+                index=0,
+            )
+        else:
             model = st.selectbox(
                 "Select Model",
                 [
@@ -467,18 +591,6 @@ def sidebar_and_init() -> tuple:
                     "llama3-8b-8192",
                     "llama-3.1-70b-versatile",
                     "llama3-70b-8192",
-                ],
-                index=3,
-            )
-        else:  #! Only the models having lesser parameters are used for audio input
-            model = st.selectbox(
-                "Select Model",
-                [
-                    "gemma2-9b-it",
-                    "gemma-7b-it",
-                    "mixtral-8x7b-32768",
-                    "llama-3.1-8b-instant",
-                    "llama3-8b-8192",
                 ],
                 index=3,
             )
@@ -501,6 +613,15 @@ def sidebar_and_init() -> tuple:
             st.markdown("[**Model by**](https://mistral.ai/news/mixtral-of-experts/)")
             st.image(
                 "https://upload.wikimedia.org/wikipedia/de/thumb/b/b7/Mistral_AI_Logo.png/320px-Mistral_AI_Logo.png",
+                width=125,
+            )
+
+        elif "llava" in model:
+            st.markdown(
+                "[**Model by**](https://www.microsoft.com/en-us/research/project/llava-large-language-and-vision-assistant/)"
+            )
+            st.image(
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Microsoft_logo.svg/320px-Microsoft_logo.svg.png",
                 width=125,
             )
 
@@ -536,6 +657,10 @@ def sidebar_and_init() -> tuple:
             max_tokens = 8192  #! Hardcoded to 8192 for audio input to refrain from sending multiple requests to the API
         elif st.session_state.use_audio_input:
             max_tokens = 1024  #! Hardcoded to 1024 for audio input to refrain from sending multiple requests to the API
+        elif model == "llava-v1.5-7b-4096-preview":
+            max_tokens = st.slider(
+                "Max Tokens", 0, 4096, 1024, help="Max tokens in the response"
+            )
         else:
             max_tokens = st.slider(
                 "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
@@ -741,6 +866,25 @@ def sidebar_and_init() -> tuple:
 
             max_results = 30  # Hardcoded to 30 for audio input to refrain from sending multiple requests to the API
 
+        #! Logic to clear the chat history, remove any audio files generated, reinitialize the toggles and reload the page
+        if len(st.session_state.clear_chat_tracker) > 0:
+            if st.session_state.clear_chat_tracker[-1]:
+                st.session_state.show_file_uploader = (
+                    False  # ? Un-toggle the file uploader
+                )
+        #! Untoggle the file uploader by default if it ran the last time successfully
+        if st.session_state.successfully_ran and st.session_state.page_reload_count > 1:
+            st.session_state.successfully_ran = False
+            st.session_state.show_file_uploader = False
+
+        st.checkbox(
+            "Attatch Image",
+            st.session_state.show_file_uploader,
+            key="show_file_uploader",
+            on_change=handle_toggle,
+            args=("show_file_uploader",),
+        )
+
         if st.button("Clear Chat"):
             st.session_state.messages = [
                 {
@@ -812,6 +956,7 @@ def sidebar_and_init() -> tuple:
 
 def body(
     prompt=None,
+    encoded_image=None,
     model=None,
     temperature=None,
     max_tokens=None,
@@ -852,7 +997,101 @@ def body(
     audio_file_path = None
     model_output = None
 
-    if prompt:
+    if (
+        prompt and st.session_state.show_file_uploader
+    ):  #! Implement LLaVA model for image input
+        if encoded_image:
+            try:
+                show_media(
+                    role="user",
+                    model_output=prompt,
+                    img_links=[f"data:image/jpeg;base64,{encoded_image}"],
+                )
+
+                message = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{encoded_image}"
+                                },
+                            },
+                            {"type": "text", "text": prompt},
+                        ],
+                    }
+                ]
+
+                with st.spinner("Processing the image..."):
+                    client = Groq(api_key=st.session_state.groq_api_key)
+                    chat_completion = client.chat.completions.create(
+                        model=model,
+                        messages=message,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        top_p=top_p,
+                        stream=False,
+                    )
+                    model_output = chat_completion.choices[0].message.content
+
+                    st.session_state.messages.append(
+                        {
+                            "role": "user",
+                            "content": prompt,
+                        }
+                    )
+                    st.session_state.messages.append(
+                        {
+                            "role": "assistant",
+                            "content": model_output,
+                        }
+                    )
+                    st.session_state.display_message.append(
+                        {
+                            "role": "user",
+                            "content": prompt,
+                            "media": {
+                                "audio_file_path": None,
+                                "img_links": None,
+                                "video_links": None,
+                                "MARKDOWN_PLACEHOLDER": None,
+                                "related_questions": None,
+                            },
+                        },
+                    )
+                    st.session_state.display_message.append(
+                        {
+                            "role": "assistant",
+                            "content": model_output,
+                            "media": {
+                                "audio_file_path": None,
+                                "img_links": [
+                                    f"data:image/jpeg;base64,{encoded_image}"
+                                ],
+                                "video_links": None,
+                                "MARKDOWN_PLACEHOLDER": None,
+                                "related_questions": None,
+                            },
+                        }
+                    )
+                    st.session_state.successfully_ran = True
+                    # st.session_state.clear_chat_tracker.append(True)
+
+                    st.info(
+                        """
+                        - The **Attatch Image** checkbox will be ❌ un-checked automatically.\n
+                        - ❌ Un-check and ✅ Re-check the **Attatch Image** checkbox to attatch your image again.
+                        """,
+                    )
+
+            except Exception as e:
+                print(e)
+                st.warning("Somthing went wrong with the image. Please try again.")
+        else:
+            st.warning("Please upload an image to proceed.")
+
+    elif prompt and not st.session_state.show_file_uploader:
         # Add user message to chat history
         if (
             st.session_state.groq_api_key == ""
@@ -876,7 +1115,6 @@ def body(
                         "content": prompt,
                         "media": {
                             "audio_file_path": None,
-                            # "all_yt_links": None,
                             "img_links": None,
                             "video_links": None,
                             "MARKDOWN_PLACEHOLDER": None,
@@ -1113,6 +1351,7 @@ if __name__ == "__main__":
     audio_data = None
     FILE_NAME = "audio.wav"
     model_output = None
+    encoded_image = None
 
     all_sidebar_values = sidebar_and_init()
     audio_data = all_sidebar_values[-1]
@@ -1152,6 +1391,47 @@ if __name__ == "__main__":
                     os.remove(abs_path)
                     audio_data = None
 
+    elif st.session_state.show_file_uploader:
+        try:
+            with st.chat_message("assistant"):
+                st.markdown(
+                    "Upload an image, then ask me anything"
+                )  # ? Display a message to the user to upload an image
+            uploaded_file = st.file_uploader(
+                "Choose an image...",
+                type=["jpg", "jpeg", "png"],
+                accept_multiple_files=False,
+            )
+
+            if uploaded_file is not None:
+                image = safe_open_image(uploaded_file)
+                if image:
+                    # Compress Image
+                    compressed_image = compress_image(image)
+
+                    st.image(
+                        compressed_image,
+                        caption="Uploaded Image",
+                        use_column_width=False,
+                    )
+
+                    # Encode image to base64
+                    encoded_image = encode_image(compressed_image)
+                else:
+                    st.error(
+                        "Failed to process the uploaded image. Please try a different image."
+                    )
+                current_prompt = st.chat_input("Ask me anything!")
+
+        except Exception as e:
+            st.error(
+                "An error occurred while processing the uploaded image. \nClick on `Reset` and try again."
+            )
+            st.session_state.successfully_ran = (
+                True  # ? Untoggle the file uploader by default
+            )
+            current_prompt = st.chat_input("Ask me anything!")
+
     else:  # Old good text input when audio input is failing
         current_prompt = st.chat_input("Ask me anything!")
 
@@ -1165,6 +1445,7 @@ if __name__ == "__main__":
             audio_file_path,
         ) = body(
             current_prompt,
+            encoded_image,
             *sidebar_values,
         )
 

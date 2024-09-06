@@ -10,27 +10,30 @@ Engage in a lightning-fast chat conversation with **Fast-Chat**, leveraging the 
 
 #### Powered by
 
-[![Gemma Model](https://img.shields.io/badge/Gemma_Model-OS_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-OS_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-OS_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Inference_Service-black)](https://wow.groq.com/why-groq/) [![Eleven Labs](https://img.shields.io/badge/ElevenLabs-Voice_Synthesis-green)](https://elevenlabs.io/)
+[![Gemma Model](https://img.shields.io/badge/Gemma_Model-OS_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-OS_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-OS_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Microsoft](https://img.shields.io/badge/Microsoft-OS_Models-blue)](https://azure.microsoft.com/en-us/services/cognitive-services/computer-vision/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Inference_Service-black)](https://wow.groq.com/why-groq/) [![Eleven Labs](https://img.shields.io/badge/ElevenLabs-Voice_Synthesis-green)](https://elevenlabs.io/)
 
 <div style="display: flex; justify-content: space-around;">
-  <img src="utils/static/groq.jpg" alt="groq image" width="160" height="90">
-  <img src="utils/static/gemma.webp" alt="gemma image" width="160" height="90">
-  <img src="utils/static/llama.webp" alt="llama image" width="160" height="90">
-  <img src="utils/static/mistral_ai_image.jpg" alt="mistral image" width="160" height="90">
-  <img src="utils/static/elevenlabs.jpg" alt="elevenlabs image" width="160" height="90">
+  <img src="utils/static/groq.jpg" alt="groq image" width="250" height="120">
+  <img src="utils/static/gemma.webp" alt="gemma image" width="250" height="120">
+  <img src="utils/static/llama.webp" alt="llama image" width="250" height="120">
+</div>
+<div style="display: flex; justify-content: space-around;">
+  <img src="utils/static/mistral_ai_image.jpg" alt="mistral image" width="250" height="120"">
+  <img src="utils/static/elevenlabs.jpg" alt="elevenlabs image" width="250" height="120">
+  <img src="utils/static/microsoft.png" alt="microsoft image" width="250" height="120">
 </div>
 
 ## Key Functionalities
 
-- [x] ⚡**Real-Time Responses**: Experience near-instantaneous responses to your queries, facilitating a seamless conversation flow.
-- [x] 🔍 **Web Search Integration**: Fast-Chat can search the web for information and provide you with relevant results.
-- [x] 📺 **YouTube Comprehension**: Fast-Chat possesses the ability to understand and potentially respond to content from YouTube videos and shorts.
-- [x] 🎙️ **Voice Recognition**: Fast-Chat can listen to you and comprehend your queries
-- [x] 🗣️ **Audio Output**: Fast-Chat can talk back to you.
-- [x] ✨ **Interactive Interface**: Enjoy a user-friendly and intuitive chat interface for a smooth interaction.
-- [x] 📝 **Contextual Awareness**: Fast-Chat maintains conversational context, enabling it to provide more relevant and engaging responses.
-- [x] 🤖 **Model Selection**: Choose from a variety of models to tailor the chat experience to your specific needs.
-- [x] 🪛 **Tune Parameters**: Adjust parameters to refine the response generation process and personalize your interaction.
+- [x] ⚡ **Real-Time Responses**: Enjoy near-instant replies to your queries, ensuring a smooth and seamless conversation flow.
+- [x] 🔍 **Web Search Integration**: Fast-Chat can search the web to provide you with accurate and relevant information.
+- [x] 📺 **YouTube Comprehension**: Fast-Chat understands and responds to content from YouTube videos and shorts.
+- [x] 🎙️ **Voice Recognition**: Speak directly to Fast-Chat, and it will accurately interpret your queries.
+- [x] 🗣️ **Audio Output**: Fast-Chat can respond to you through voice, enhancing the interactive experience.
+- [x] 🖼️ **Multi-Modal Understanding**: Fast-Chat can analyze and comprehend visual content such as images.
+- [x] 📝 **Contextual Awareness**: Fast-Chat retains conversation context, providing more insightful and relevant responses.
+- [x] 🤖 **Model Selection**: Customize your experience by selecting from a range of models to meet your specific needs.
+- [x] 🪛 **Parameter Tuning**: Fine-tune response settings to personalize and optimize your interactions with Fast-Chat.
 
 ## Getting Started
 
@@ -147,7 +150,6 @@ pip install -r requirements.txt
 
 ## Coming Soon
 
-- [ ] **Multi-Modal Integration**: Incorporate multi-modal capabilities to enhance the user experience.
 - [ ] **Image Generation**: Implement image generation capabilities to Fast-Chat.
 - [ ] **Agentic Search**: Gives more comprehensive search results to ambiguous queries.
 - [ ] **Map Integration**: Integrate maps to provide location-based information.

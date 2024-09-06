@@ -71,6 +71,6 @@ typing-extensions==4.12.2; python_version >= '3.8'
 tzdata==2024.1; python_version >= '2'
 urllib3==2.2.2; python_version >= '3.8'
 watchdog==4.0.1; python_version >= '3.8'
-websockets==13.0; python_version >= '3.8'
+websockets==13.0.1; python_version >= '3.8'
 yarl==1.9.4; python_version >= '3.7'
 youtube-transcript-api==0.6.2
