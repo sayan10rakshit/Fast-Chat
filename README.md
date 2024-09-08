@@ -12,21 +12,23 @@ Engage in a lightning-fast chat conversation with **Fast-Chat**, leveraging the 
 
 [![Gemma Model](https://img.shields.io/badge/Gemma_Model-OS_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-OS_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-OS_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Microsoft](https://img.shields.io/badge/Microsoft-OS_Models-blue)](https://azure.microsoft.com/en-us/services/cognitive-services/computer-vision/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Inference_Service-black)](https://wow.groq.com/why-groq/) [![Eleven Labs](https://img.shields.io/badge/ElevenLabs-Voice_Synthesis-green)](https://elevenlabs.io/) [![Prodia](https://img.shields.io/badge/Prodia-Image_Generator-purple)](https://prodia.com/)
 
-<div style="text-align: center;">
-  <img src="utils/static/groq.jpg" alt="Groq Image" width="500" height="300" style="margin-bottom: 20px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start;">
+  <!-- Left side: Groq image -->
+  <div>
+    <img src="utils/static/groq.jpg" alt="Groq Image" width="500" height="200">
+  </div>
+
+  <!-- Right side: 2x3 grid of images -->
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+    <img src="utils/static/gemma.webp" alt="Gemma Image" width="166" height="100">
+    <img src="utils/static/llama.webp" alt="Llama Image" width="166" height="100">
+    <img src="utils/static/mistral_ai_image.jpg" alt="Mistral AI Image" width="166" height="100">
+    <img src="utils/static/elevenlabs.jpg" alt="ElevenLabs Image" width="166" height="100">
+    <img src="utils/static/microsoft.png" alt="Microsoft Image" width="166" height="100">
+    <img src="utils/static/prodia.png" alt="Prodia Image" width="166" height="100">
+  </div>
 </div>
 
-<div style="display: flex; justify-content: space-around; margin-bottom: 20px;">
-  <img src="utils/static/gemma.webp" alt="Gemma Image" width="166" height="100">
-  <img src="utils/static/llama.webp" alt="Llama Image" width="166" height="100">
-  <img src="utils/static/mistral_ai_image.jpg" alt="Mistral AI Image" width="166" height="100">
-</div>
-
-<div style="display: flex; justify-content: space-around;">
-  <img src="utils/static/elevenlabs.jpg" alt="ElevenLabs Image" width="166" height="100">
-  <img src="utils/static/microsoft.png" alt="Microsoft Image" width="166" height="100">
-  <img src="utils/static/prodia.png" alt="Prodia Image" width="166" height="100">
-</div>
 
 
 
