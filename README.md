@@ -13,16 +13,16 @@ Engage in a lightning-fast chat conversation with **Fast-Chat**, leveraging the 
 [![Gemma Model](https://img.shields.io/badge/Gemma_Model-OS_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-OS_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-OS_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Microsoft](https://img.shields.io/badge/Microsoft-OS_Models-blue)](https://azure.microsoft.com/en-us/services/cognitive-services/computer-vision/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Inference_Service-black)](https://wow.groq.com/why-groq/) [![Eleven Labs](https://img.shields.io/badge/ElevenLabs-Voice_Synthesis-green)](https://elevenlabs.io/) [![Prodia](https://img.shields.io/badge/Prodia-Image_Generator-purple)](https://prodia.com/)
 
 <div style="display: flex; justify-content: space-around;">
-  <img src="utils/static/groq.jpg" alt="groq image" width="250" height="150">
+  <img src="utils/static/groq.jpg" alt="groq image" width="500" height="300">
+</div>
+<div style="display: flex; justify-content: space-around;">  
   <img src="utils/static/gemma.webp" alt="gemma image" width="250" height="150">
   <img src="utils/static/llama.webp" alt="llama image" width="250" height="150">
+  <img src="utils/static/mistral_ai_image.jpg" alt="mistral image" width="250" height="150"">
 </div>
 <div style="display: flex; justify-content: space-around;">
-  <img src="utils/static/mistral_ai_image.jpg" alt="mistral image" width="250" height="150"">
   <img src="utils/static/elevenlabs.jpg" alt="elevenlabs image" width="250" height="150">
   <img src="utils/static/microsoft.png" alt="microsoft image" width="250" height="150">
-</div>
-<div style="display: flex; justify-content: space-around;">
   <img src="utils/static/prodia.png" alt="elevenlabs image" width="250" height="150">
 </div>
 
