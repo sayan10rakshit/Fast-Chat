@@ -10,7 +10,7 @@ Engage in a lightning-fast chat conversation with **Fast-Chat**, leveraging the 
 
 #### Powered by
 
-[![Gemma Model](https://img.shields.io/badge/Gemma_Model-OS_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-OS_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-OS_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Microsoft](https://img.shields.io/badge/Microsoft-OS_Models-blue)](https://azure.microsoft.com/en-us/services/cognitive-services/computer-vision/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Inference_Service-black)](https://wow.groq.com/why-groq/) [![Eleven Labs](https://img.shields.io/badge/ElevenLabs-Voice_Synthesis-green)](https://elevenlabs.io/)
+[![Gemma Model](https://img.shields.io/badge/Gemma_Model-OS_Models-blue)](https://ai.google.dev/gemma) [![Llama Model](https://img.shields.io/badge/Llama_Model-OS_Models-violet)](https://llama.meta.com/) [![Mistral AI](https://img.shields.io/badge/Mistral_AI-OS_Models-orange)](https://mistral.ai/news/mixtral-of-experts/) [![Microsoft](https://img.shields.io/badge/Microsoft-OS_Models-blue)](https://azure.microsoft.com/en-us/services/cognitive-services/computer-vision/) [![Groq AI](https://img.shields.io/badge/Groq_AI-Inference_Service-black)](https://wow.groq.com/why-groq/) [![Eleven Labs](https://img.shields.io/badge/ElevenLabs-Voice_Synthesis-green)](https://elevenlabs.io/) [![Prodia](https://img.shields.io/badge/Prodia-Image_Generator-purple)](https://prodia.com/)
 
 <div style="display: flex; justify-content: space-around;">
   <img src="utils/static/groq.jpg" alt="groq image" width="250" height="150">
@@ -22,18 +22,22 @@ Engage in a lightning-fast chat conversation with **Fast-Chat**, leveraging the 
   <img src="utils/static/elevenlabs.jpg" alt="elevenlabs image" width="250" height="150">
   <img src="utils/static/microsoft.png" alt="microsoft image" width="250" height="150">
 </div>
+<div style="display: flex; justify-content: space-around;">
+  <img src="utils/static/prodia.png" alt="elevenlabs image" width="250" height="150">
+</div>
 
 ## Key Functionalities
 
-- [x] ⚡ **Real-Time Responses**: Enjoy near-instant replies to your queries, ensuring a smooth and seamless conversation flow.
-- [x] 🔍 **Web Search Integration**: Fast-Chat can search the web to provide you with accurate and relevant information.
-- [x] 📺 **YouTube Comprehension**: Fast-Chat understands and responds to content from YouTube videos and shorts.
-- [x] 🎙️ **Voice Recognition**: Speak directly to Fast-Chat, and it will accurately interpret your queries.
-- [x] 🗣️ **Audio Output**: Fast-Chat can respond to you through voice, enhancing the interactive experience.
-- [x] 🖼️ **Multi-Modal Understanding**: Fast-Chat can analyze and comprehend visual content such as images.
-- [x] 📝 **Contextual Awareness**: Fast-Chat retains conversation context, providing more insightful and relevant responses.
-- [x] 🤖 **Model Selection**: Customize your experience by selecting from a range of models to meet your specific needs.
-- [x] 🪛 **Parameter Tuning**: Fine-tune response settings to personalize and optimize your interactions with Fast-Chat.
+- [x] ⚡ **Real-Time Responses**: Experience near-instantaneous replies for a smooth and uninterrupted conversation flow.
+- [x] 🔍 **Web Search Integration**: Fast-Chat seamlessly integrates web search capabilities to deliver accurate and relevant information.
+- [x] 📺 **YouTube Comprehension**: Understand and interact with content from YouTube videos and shorts through Fast-Chat.
+- [x] 🎙️ **Voice Recognition**: Speak directly to Fast-Chat, and it will accurately interpret and process your queries.
+- [x] 🗣️ **Audio Output**: Fast-Chat responds through voice, offering an enhanced and interactive communication experience.
+- [x] 🎨 **Image Generation**: Fast-Chat can generate images tailored to your needs.
+- [x] 🖼️ **Multi-Modal Understanding**: Fast-Chat analyzes and comprehends visual content, such as images, for richer interactions.
+- [x] 📝 **Contextual Awareness**: Retain conversation context for more relevant and insightful responses.
+- [x] 🤖 **Model Selection**: Choose from a variety of models to customize your experience and meet specific requirements.
+- [x] 🪛 **Parameter Tuning**: Fine-tune settings to personalize and optimize your interactions with Fast-Chat.
 
 ## Getting Started
 
@@ -45,6 +49,7 @@ Engage in a lightning-fast chat conversation with **Fast-Chat**, leveraging the 
 - [🔗GROQ API key](https://console.groq.com/keys)
 - [🔗SerpAPI key](https://serpapi.com/dashboard) (optional)
 - [🔗ElevenLabs API key](https://elevenlabs.io/app/speech-synthesis/text-to-speech) (optional)
+- [🔗Prodia API key](https://app.prodia.com/api) (optional)
 
 ### Installation
 
@@ -150,6 +155,5 @@ pip install -r requirements.txt
 
 ## Coming Soon
 
-- [ ] **Image Generation**: Implement image generation capabilities to Fast-Chat.
 - [ ] **Agentic Search**: Gives more comprehensive search results to ambiguous queries.
 - [ ] **Map Integration**: Integrate maps to provide location-based information.

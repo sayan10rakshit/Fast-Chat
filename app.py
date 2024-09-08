@@ -1,5 +1,7 @@
 import os
+import time
 import random
+import requests
 import base64
 from io import BytesIO
 
@@ -139,17 +141,27 @@ def handle_toggle(toggle_name: str) -> None:
         st.session_state.use_audio_input = False
         st.session_state.use_audio_output = False
         st.session_state.show_file_uploader = False
+        st.session_state.img_gen = False
     elif toggle_name == "search_the_web":
         st.session_state.use_you_tube = False
         st.session_state.show_file_uploader = False
+        st.session_state.img_gen = False
     elif toggle_name == "use_audio_input":
         st.session_state.use_you_tube = False
         st.session_state.show_file_uploader = False
+        st.session_state.img_gen = False
     elif toggle_name == "show_file_uploader":
         st.session_state.use_audio_input = False
         st.session_state.use_audio_output = False
         st.session_state.use_you_tube = False
         st.session_state.search_the_web = False
+        st.session_state.img_gen = False
+    elif toggle_name == "img_gen":
+        st.session_state.use_audio_input = False
+        st.session_state.use_audio_output = False
+        st.session_state.use_you_tube = False
+        st.session_state.search_the_web = False
+        st.session_state.show_file_uploader = False
 
 
 #! End of Toggle Logic
@@ -199,6 +211,63 @@ def encode_image(image):
 
 
 #! End of Image Processing Functions
+#! -------------------------------------------------------------------------------------------------
+
+
+#! Functions to generate image
+#! -------------------------------------------------------------------------------------------------
+def generate_image(
+    payload: dict,
+    api_key: str,
+):
+    url = "https://api.prodia.com/v1/sdxl/generate"
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "X-Prodia-Key": api_key,
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+
+    if response.status_code == 200:
+        job_id = response.json()["job"]
+        return job_id
+    else:
+        st.error(f"Error: {response.status_code} - {response.text}")
+        return None
+
+
+def get_image_url(job_id: str, api_key: str):
+    url = f"https://api.prodia.com/v1/job/{job_id}"
+    headers = {
+        "accept": "application/json",
+        "X-Prodia-Key": api_key,
+    }
+
+    max_retries = 10
+    retry_delay = 2
+
+    for _ in range(max_retries):
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            data = response.json()
+            if data["status"] == "succeeded":
+                return data["imageUrl"]
+            elif data["status"] == "failed":
+                st.error("Image generation failed")
+                return None
+        elif response.status_code in [400, 401, 402]:
+            st.error(f"Error: {response.status_code} - {response.text}")
+            return None
+
+        time.sleep(retry_delay)
+
+    st.error("Image generation timed out")
+    return None
+
+
+#! End of Functions to generate image
 #! -------------------------------------------------------------------------------------------------
 
 
@@ -254,7 +323,7 @@ def show_media(
 
             if img_links is not None:
                 if len(img_links) == 1:
-                    st.caption("**Image from the web**")
+                    st.caption("**Image**")
                     st.image(img_links[0], use_column_width="auto")
                 elif len(img_links) == 2:
                     st.caption("**Images from the web**")
@@ -326,7 +395,7 @@ def show_media(
                     if "thumbnail" in question:
                         if "title" in question:
                             st.markdown(f"**{question['title']}**")
-                        col1, col2 = st.columns([1, 5])
+                        col1, col2 = st.columns([5, 1])
                         if "thumbnail" in question:
                             col2.image(question["thumbnail"])
                         if "snippet" in question:
@@ -466,6 +535,9 @@ def sidebar_and_init() -> tuple:
     if "successfully_ran" not in st.session_state:
         st.session_state.successfully_ran = False
 
+    if "img_gen" not in st.session_state:
+        st.session_state.img_gen = False
+
     #! Logic to clear the chat history, remove any audio files generated, reinitialize the toggles and reload the page
     if "clear_chat_tracker" not in st.session_state:
         st.session_state.clear_chat_tracker = []
@@ -475,6 +547,12 @@ def sidebar_and_init() -> tuple:
 
     if "is_elevenlabs_api_key_valid" not in st.session_state:
         st.session_state.is_elevenlabs_api_key_valid = False
+
+    if "prodia_api_key" not in st.session_state:
+        st.session_state.prodia_api_key = ""
+
+    if "is_prodia_api_key_valid" not in st.session_state:
+        st.session_state.is_prodia_api_key_valid = False
 
     if "use_you_tube" not in st.session_state:
         st.session_state.use_you_tube = False
@@ -877,13 +955,47 @@ def sidebar_and_init() -> tuple:
             st.session_state.successfully_ran = False
             st.session_state.show_file_uploader = False
 
-        st.checkbox(
-            "Attatch Image",
-            st.session_state.show_file_uploader,
-            key="show_file_uploader",
-            on_change=handle_toggle,
-            args=("show_file_uploader",),
-        )
+        checkbox_cols = st.columns([0.5, 0.5])
+        with checkbox_cols[0]:
+            st.checkbox(
+                "Attatch Image",
+                st.session_state.show_file_uploader,
+                key="show_file_uploader",
+                on_change=handle_toggle,
+                args=("show_file_uploader",),
+            )
+
+        #! Logic to clear the chat history, remove any audio files generated, reinitialize the toggles and reload the page
+        if len(st.session_state.clear_chat_tracker) > 0:
+            if st.session_state.clear_chat_tracker[-1]:
+                st.session_state.img_gen = False  # ? Un-toggle the image generation
+
+        with checkbox_cols[1]:
+            st.checkbox(
+                "Generate Image",
+                st.session_state.img_gen,
+                key="img_gen",
+                on_change=handle_toggle,
+                args=("img_gen",),
+            )
+
+        if st.session_state.img_gen:
+            if (
+                st.session_state.prodia_api_key == ""
+                or not st.session_state.is_prodia_api_key_valid
+            ):
+                prodia_api_key = st.text_input(
+                    "Enter Prodia API Key",
+                    type="password",
+                    help="Enter your Prodia API key to generate images.",
+                )
+
+                if prodia_api_key != "":
+                    st.session_state.prodia_api_key = prodia_api_key
+                st.markdown(
+                    "[Get your FREE Prodia API key!](https://app.prodia.com/api)",
+                    help="""A very powerful API to generate images from text.""",
+                )
 
         if st.button("Clear Chat"):
             st.session_state.messages = [
@@ -955,14 +1067,15 @@ def sidebar_and_init() -> tuple:
 
 
 def body(
-    prompt=None,
-    encoded_image=None,
-    model=None,
-    temperature=None,
-    max_tokens=None,
-    top_p=None,
-    region=None,
-    max_results=None,
+    prompt: str = None,
+    encoded_image: str = None,
+    payload: dict = None,
+    model: str = None,
+    temperature: float = None,
+    max_tokens: int = None,
+    top_p: float = None,
+    region: str = None,
+    max_results: int = None,
 ) -> tuple:
     """
     The main body of the app that handles the user input and model response.
@@ -1000,98 +1113,252 @@ def body(
     if (
         prompt and st.session_state.show_file_uploader
     ):  #! Implement LLaVA model for image input
-        if encoded_image:
+        if st.session_state.groq_api_key == "":
+            st.warning("Please enter your GROQ API key.")
+        else:
             try:
-                show_media(
-                    role="user",
-                    model_output=prompt,
-                    img_links=[f"data:image/jpeg;base64,{encoded_image}"],
-                )
+                if encoded_image:
+                    try:
+                        show_media(
+                            role="user",
+                            model_output=prompt,
+                        )
 
-                message = [
-                    {
-                        "role": "user",
-                        "content": [
+                        message = [
                             {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{encoded_image}"
-                                },
-                            },
-                            {"type": "text", "text": prompt},
-                        ],
-                    }
-                ]
-
-                with st.spinner("Processing the image..."):
-                    client = Groq(api_key=st.session_state.groq_api_key)
-                    chat_completion = client.chat.completions.create(
-                        model=model,
-                        messages=message,
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                        top_p=top_p,
-                        stream=False,
-                    )
-                    model_output = chat_completion.choices[0].message.content
-
-                    st.session_state.messages.append(
-                        {
-                            "role": "user",
-                            "content": prompt,
-                        }
-                    )
-                    st.session_state.messages.append(
-                        {
-                            "role": "assistant",
-                            "content": model_output,
-                        }
-                    )
-                    st.session_state.display_message.append(
-                        {
-                            "role": "user",
-                            "content": prompt,
-                            "media": {
-                                "audio_file_path": None,
-                                "img_links": None,
-                                "video_links": None,
-                                "MARKDOWN_PLACEHOLDER": None,
-                                "related_questions": None,
-                            },
-                        },
-                    )
-                    st.session_state.display_message.append(
-                        {
-                            "role": "assistant",
-                            "content": model_output,
-                            "media": {
-                                "audio_file_path": None,
-                                "img_links": [
-                                    f"data:image/jpeg;base64,{encoded_image}"
+                                "role": "user",
+                                "content": [
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {
+                                            "url": f"data:image/jpeg;base64,{encoded_image}"
+                                        },
+                                    },
+                                    {"type": "text", "text": prompt},
                                 ],
-                                "video_links": None,
-                                "MARKDOWN_PLACEHOLDER": None,
-                                "related_questions": None,
-                            },
-                        }
-                    )
-                    st.session_state.successfully_ran = True
-                    # st.session_state.clear_chat_tracker.append(True)
+                            }
+                        ]
 
-                    st.info(
-                        """
-                        - The **Attatch Image** checkbox will be ❌ un-checked automatically.\n
-                        - ❌ Un-check and ✅ Re-check the **Attatch Image** checkbox to attatch your image again.
-                        """,
-                    )
+                        try:
+                            with st.spinner("Processing the image..."):
+                                client = Groq(api_key=st.session_state.groq_api_key)
+                                chat_completion = client.chat.completions.create(
+                                    model=model,
+                                    messages=message,
+                                    temperature=temperature,
+                                    max_tokens=max_tokens,
+                                    top_p=top_p,
+                                    stream=False,
+                                )
+                                model_output = chat_completion.choices[
+                                    0
+                                ].message.content
 
+                                st.session_state.messages.append(
+                                    {
+                                        "role": "user",
+                                        "content": prompt,
+                                    }
+                                )
+                                st.session_state.messages.append(
+                                    {
+                                        "role": "assistant",
+                                        "content": model_output,
+                                    }
+                                )
+                                st.session_state.display_message.append(
+                                    {
+                                        "role": "user",
+                                        "content": prompt,
+                                        "media": {
+                                            "audio_file_path": None,
+                                            "img_links": None,
+                                            "video_links": None,
+                                            "MARKDOWN_PLACEHOLDER": None,
+                                            "related_questions": None,
+                                        },
+                                    },
+                                )
+                                st.session_state.display_message.append(
+                                    {
+                                        "role": "assistant",
+                                        "content": model_output,
+                                        "media": {
+                                            "audio_file_path": None,
+                                            "img_links": [
+                                                f"data:image/jpeg;base64,{encoded_image}"
+                                            ],
+                                            "video_links": None,
+                                            "MARKDOWN_PLACEHOLDER": None,
+                                            "related_questions": None,
+                                        },
+                                    }
+                                )
+                                st.session_state.successfully_ran = True
+                                img_links = [f"data:image/jpeg;base64,{encoded_image}"]
+
+                                st.info(
+                                    """
+                                    - The **Attatch Image** checkbox will be ❌ un-checked automatically.\n
+                                    - ❌ Un-check and ✅ Re-check the **Attatch Image** checkbox to attatch your image again.
+                                    """,
+                                )
+                        except groq.RateLimitError:
+                            st.session_state.messages = []
+                            st.session_state.messages.append(
+                                {
+                                    "role": "assistant",
+                                    "content": "The user has exceeded the rate limit.",
+                                }
+                            )
+                            st.write("You have exceeded the rate limit.")
+                            st.session_state.is_groq_api_key_valid = False
+                            print("Rate limit error")
+
+                        except groq.AuthenticationError:
+                            st.error("Invalid API key.")
+                            del st.session_state.groq_api_key
+                            del st.session_state.messages
+                            del (
+                                st.session_state.page_reload_count
+                            )  # Display the welcome message again
+                            st.session_state.is_groq_api_key_valid = False
+                            print("Invalid API key")
+
+                        except groq.BadRequestError:
+                            with st.chat_message("assistant"):
+                                st.write(GENERIC_RESPONSE)
+                                del st.session_state.messages
+                            st.session_state.is_groq_api_key_valid = False
+                            print("Bad request error")
+
+                        except groq.InternalServerError:
+                            with st.chat_message("assistant"):
+                                st.write(GENERIC_RESPONSE)
+                                del st.session_state.messages
+                            st.session_state.is_groq_api_key_valid = False
+                            print("Internal server error")
+
+                    except Exception as e:
+                        print(e)
+                        st.warning(
+                            "Somthing went wrong with the image. Please try again."
+                        )
+                else:
+                    st.warning("Please upload an image to proceed.")
             except Exception as e:
                 print(e)
-                st.warning("Somthing went wrong with the image. Please try again.")
-        else:
-            st.warning("Please upload an image to proceed.")
+                st.error(
+                    "Something went wrong with the image processing. Please try again later."
+                )
 
-    elif prompt and not st.session_state.show_file_uploader:
+    #! Implement Prodia API for image generation
+    elif prompt and st.session_state.img_gen and payload:
+        if st.session_state.prodia_api_key:
+            show_media(
+                role="user",
+                model_output=prompt,
+            )
+
+            try:
+                with st.spinner("Generating the image..."):
+                    job_id = "1234"
+                    job_id = generate_image(
+                        payload=payload,
+                        api_key=st.session_state.prodia_api_key,
+                    )
+                    if job_id:
+                        image_url = get_image_url(
+                            job_id, api_key=st.session_state.prodia_api_key
+                        )
+                        if image_url:
+                            st.session_state.is_prodia_api_key_valid = True
+                            img_links = [image_url]
+
+                            model_output = f"""
+                            ### ✅ Image Generation Successful!
+                            
+                            **Positive Prompt**: `{payload["prompt"]}`\n
+                            **Negative Prompt**: `{payload["negative_prompt"]}`
+
+                            ---
+                            
+                            #### **Generation Settings**:
+                            
+                            - **Image Style**: `{payload["style_preset"]}`
+                            - **Steps**: `{payload["steps"]}`
+                            - **Classifier-Free Guidance Scale (CFG)**: `{payload["cfg_scale"]}`
+                            - **Seed**: `{payload["seed"]}`
+                            - **Sampler**: `{payload["sampler"]}`
+                            - **Width**: `{payload["width"]}`
+                            - **Height**: `{payload["height"]}`
+                            
+                            ---                            
+                            
+                            Visit the link to view the image 👇\n
+                            [{image_url}]({image_url})
+                            """
+
+                            st.session_state.messages.append(
+                                {
+                                    "role": "user",
+                                    "content": prompt,
+                                }
+                            )
+                            st.session_state.messages.append(
+                                {
+                                    "role": "assistant",
+                                    "content": model_output
+                                    + ". The image is generated successfully and is shown to the user.",
+                                }
+                            )
+                            st.session_state.display_message.append(
+                                {
+                                    "role": "user",
+                                    "content": prompt,
+                                    "media": {
+                                        "audio_file_path": None,
+                                        "img_links": None,
+                                        "video_links": None,
+                                        "MARKDOWN_PLACEHOLDER": None,
+                                        "related_questions": None,
+                                    },
+                                }
+                            )
+                            st.session_state.display_message.append(
+                                {
+                                    "role": "assistant",
+                                    "content": model_output,
+                                    "media": {
+                                        "audio_file_path": None,
+                                        "img_links": img_links,
+                                        "video_links": None,
+                                        "MARKDOWN_PLACEHOLDER": None,
+                                        "related_questions": None,
+                                    },
+                                }
+                            )
+                        else:
+                            st.error("Failed to generate image")
+                            st.session_state.is_prodia_api_key_valid = False
+                    else:
+                        st.error("Failed to start image generation job")
+                        st.session_state.is_prodia_api_key_valid = False
+            except Exception as e:
+                print(e)
+                st.error(
+                    "Something went wrong with the image generation. Please try again later."
+                )
+                st.session_state.is_prodia_api_key_valid = False
+
+        else:
+            st.warning("Please enter your Prodia API key.")
+
+    elif (
+        prompt
+        and not st.session_state.show_file_uploader
+        and not st.session_state.img_gen
+    ):
         # Add user message to chat history
         if (
             st.session_state.groq_api_key == ""
@@ -1342,7 +1609,6 @@ if __name__ == "__main__":
         },
     )
 
-    # all_yt_links = None
     img_links = None
     video_links = None
     MARKDOWN_PLACEHOLDER = None
@@ -1352,6 +1618,8 @@ if __name__ == "__main__":
     FILE_NAME = "audio.wav"
     model_output = None
     encoded_image = None
+    prompt = None  # ? For img gen
+    payload = None  # ? For img gen
 
     all_sidebar_values = sidebar_and_init()
     audio_data = all_sidebar_values[-1]
@@ -1432,6 +1700,92 @@ if __name__ == "__main__":
             )
             current_prompt = st.chat_input("Ask me anything!")
 
+    elif st.session_state.img_gen:
+
+        with st.form(key="user_input_form"):
+            prompt = st.text_input(
+                "Enter your message or image prompt:",
+                value="A panda in a bamboo forest eating bamboo sticks",
+            )
+            negative_prompt = st.text_input(
+                "Enter a negative prompt (optional):", value="ugly, dark"
+            )
+
+            model_name_sampler_style_cols = st.columns([1, 1, 1])
+            with model_name_sampler_style_cols[0]:
+                model_name = st.selectbox(
+                    "Choose a model:",
+                    [
+                        "sd_xl_base_1.0.safetensors [be9edd61]",
+                        "dynavisionXL_0411.safetensors [c39cc051]",
+                        "dreamshaperXL10_alpha2.safetensors [c8afe2ef]",
+                    ],
+                    index=0,
+                )
+            with model_name_sampler_style_cols[1]:
+                sampler = st.selectbox(
+                    "Choose a sampler:",
+                    [
+                        "DPM++ 2M Karras",
+                        "Euler",
+                    ],
+                    index=1,
+                )
+
+            with model_name_sampler_style_cols[2]:
+                style_preset = st.selectbox(
+                    "Choose a style preset:",
+                    [
+                        "3d-model",
+                        "analog-film",
+                        "anime",
+                        "cinematic",
+                        "comic-book",
+                        "digital-art",
+                        "enhance",
+                        "fantasy-art",
+                        "isometric",
+                        "line-art",
+                        "low-poly",
+                        "neon-punk",
+                        "origami",
+                        "photographic",
+                        "pixel-art",
+                        "tile-texture",
+                    ],
+                    index=2,
+                )
+
+            steps_cfg_scale_seed_cols = st.columns([1, 1, 1])
+            with steps_cfg_scale_seed_cols[0]:
+                steps = st.slider("Number of steps:", 20, 50, 20)
+            with steps_cfg_scale_seed_cols[1]:
+                cfg_scale = st.slider("Classifier-Free Guidance Scale", 5, 15, 7)
+            with steps_cfg_scale_seed_cols[2]:
+                seed = st.number_input(
+                    "Seed", value=-1, step=1, min_value=-1, max_value=1000
+                )
+
+            submit_button = st.form_submit_button("Send")
+
+        if submit_button:
+            if prompt:
+                current_prompt = prompt
+                payload = {
+                    "model": model_name,
+                    "prompt": prompt,
+                    "negative_prompt": negative_prompt,
+                    "style_preset": style_preset,
+                    "steps": steps,
+                    "cfg_scale": cfg_scale,
+                    "seed": seed,
+                    "sampler": sampler,
+                    "width": 1024,
+                    "height": 1024,
+                }
+            else:
+                st.warning("Please enter a prompt to generate the image.")
+
     else:  # Old good text input when audio input is failing
         current_prompt = st.chat_input("Ask me anything!")
 
@@ -1446,6 +1800,7 @@ if __name__ == "__main__":
         ) = body(
             current_prompt,
             encoded_image,
+            payload,
             *sidebar_values,
         )
 
