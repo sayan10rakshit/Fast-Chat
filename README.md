@@ -33,15 +33,13 @@ Engage in a lightning-fast chat conversation with **Fast-Chat**, leveraging the 
 ## Key Functionalities
 
 - [x] ⚡ **Real-Time Responses**: Experience near-instantaneous replies for a smooth and uninterrupted conversation flow.
-- [x] 🔍 **Web Search Integration**: Fast-Chat seamlessly integrates web search capabilities to deliver accurate and relevant information.
+- [x] 🔍 **Web Search Integration**: Fast-Chat seamlessly integrates web search capabilities to deliver accurate and comprehensive information.
 - [x] 📺 **YouTube Comprehension**: Understand and interact with content from YouTube videos and shorts through Fast-Chat.
 - [x] 🎙️ **Voice Recognition**: Speak directly to Fast-Chat, and it will accurately interpret and process your queries.
 - [x] 🗣️ **Audio Output**: Fast-Chat responds through voice, offering an enhanced and interactive communication experience.
 - [x] 🎨 **Image Generation**: Fast-Chat can generate images tailored to your needs.
 - [x] 🖼️ **Multi-Modal Understanding**: Fast-Chat analyzes and comprehends visual content, such as images, for richer interactions.
 - [x] 📝 **Contextual Awareness**: Retain conversation context for more relevant and insightful responses.
-- [x] 🤖 **Model Selection**: Choose from a variety of models to customize your experience and meet specific requirements.
-- [x] 🪛 **Parameter Tuning**: Fine-tune settings to personalize and optimize your interactions with Fast-Chat.
 
 ## Getting Started
 
@@ -159,5 +157,4 @@ pip install -r requirements.txt
 
 ## Coming Soon
 
-- [ ] **Agentic Search**: Gives more comprehensive search results to ambiguous queries.
 - [ ] **Map Integration**: Integrate maps to provide location-based information.

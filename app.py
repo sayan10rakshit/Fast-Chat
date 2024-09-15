@@ -21,6 +21,7 @@ from utils.extract_subs import prepare_prompt, filter_links
 from utils.get_web_results import search_the_web, REGIONS
 from utils.get_web_results_serp import get_web_results
 from utils.get_location import find_closest_match
+from utils.agentic_search import generate_search_strings, agentic_search_crawler
 
 voice_name_to_id = {
     "Jessica": {"id": "cgSgspJ2msm6clMCkdW9", "type": "Conversational"},
@@ -162,6 +163,21 @@ def handle_toggle(toggle_name: str) -> None:
         st.session_state.use_you_tube = False
         st.session_state.search_the_web = False
         st.session_state.show_file_uploader = False
+
+
+def handle_search_toggle(toggle_name: str) -> None:
+    if toggle_name == "use_agentic_search":
+        st.session_state.use_agentic_search = True
+        st.session_state.use_serp_api = False
+        st.session_state.use_plain_duckduckgo = False
+    elif toggle_name == "use_serp_api":
+        st.session_state.use_serp_api = True
+        st.session_state.use_agentic_search = False
+        st.session_state.use_plain_duckduckgo = False
+    elif toggle_name == "use_plain_duckduckgo":
+        st.session_state.use_plain_duckduckgo = True
+        st.session_state.use_agentic_search = False
+        st.session_state.use_serp_api = False
 
 
 #! End of Toggle Logic
@@ -560,6 +576,9 @@ def sidebar_and_init() -> tuple:
     if "search_the_web" not in st.session_state:
         st.session_state.search_the_web = False
 
+    if "use_plain_duckduckgo" not in st.session_state:
+        st.session_state.use_plain_duckduckgo = False
+
     if "use_serp_api" not in st.session_state:
         st.session_state.use_serp_api = False
 
@@ -571,6 +590,9 @@ def sidebar_and_init() -> tuple:
 
     if "old_user_serpapi_location" not in st.session_state:
         st.session_state.old_user_serpapi_location = ""
+
+    if "use_agentic_search" not in st.session_state:
+        st.session_state.use_agentic_search = False
 
     st.session_state.page_reload_count += (
         1  # will be incremented each time streamlit reruns the script
@@ -594,6 +616,10 @@ def sidebar_and_init() -> tuple:
         st.session_state.special_message2 = ""
     if "special_message2_shown" not in st.session_state:
         st.session_state.special_message2_shown = False
+    if "special_message3" not in st.session_state:
+        st.session_state.special_message3 = ""
+    if "special_message3_shown" not in st.session_state:
+        st.session_state.special_message3_shown = False
 
     st.markdown("# Fast Chat ⚡")
     st.markdown("by **[Sayan Rakshit](https://github.com/sayan10rakshit/Fast-Chat)**")
@@ -658,6 +684,14 @@ def sidebar_and_init() -> tuple:
                 ],
                 index=0,
             )
+        #! Mandatorily use Mixtral for agentic search to handle large number of tokens
+        elif st.session_state.use_agentic_search and st.session_state.search_the_web:
+            model = st.selectbox(
+                "Select Model",
+                [
+                    "mixtral-8x7b-32768",
+                ],
+            )
         else:
             model = st.selectbox(
                 "Select Model",
@@ -703,7 +737,10 @@ def sidebar_and_init() -> tuple:
                 width=125,
             )
 
-        if not st.session_state.use_audio_input:
+        if (
+            not st.session_state.use_audio_input
+            and not st.session_state.use_agentic_search
+        ):
             temperature = st.slider(
                 "Temperature",
                 0.0,
@@ -714,13 +751,27 @@ def sidebar_and_init() -> tuple:
             )
         else:
             temperature = 1.0  #! Hardcoded to 1.0 for audio input to refrain from sending multiple requests to the API
+            st.success(f"{temperature=}")
 
-        if model == "mixtral-8x7b-32768" and not st.session_state.use_audio_input:
+        if (
+            model == "mixtral-8x7b-32768"
+            and not st.session_state.use_audio_input
+            and not st.session_state.use_agentic_search
+        ):
             max_tokens = st.slider(
                 "Max Tokens", 0, 32768, 1024, help="Max tokens in the response"
             )
+        elif (
+            model == "mixtral-8x7b-32768"
+            and not st.session_state.use_audio_input
+            and st.session_state.use_agentic_search
+            and st.session_state.search_the_web
+        ):
+            max_tokens = 32768  #! Hardcoded to 32768 for agentic search to handle large number of tokens
+            st.success(f"{max_tokens=}")
         elif model == "mixtral-8x7b-32768" and st.session_state.use_audio_input:
             max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
+            st.success(f"{max_tokens=}")
         elif (
             model in ("llama-3.1-8b-instant", "llama-3.1-70b-versatile")
             and not st.session_state.use_audio_input
@@ -729,12 +780,23 @@ def sidebar_and_init() -> tuple:
                 "Max Tokens", 0, 8000, 1024, help="Max tokens in the response"
             )
         elif (
+            model in ("llama-3.1-8b-instant", "llama-3.1-70b-versatile")
+            and st.session_state.use_audio_input
+        ):
+            max_tokens = 8000
+            st.success(f"{max_tokens=}")
+        elif (
             model in ("llama3-70b-8192", "llama3-8b-8192")
             and st.session_state.use_audio_input
         ):
             max_tokens = 8192  #! Hardcoded to 8192 for audio input to refrain from sending multiple requests to the API
-        elif st.session_state.use_audio_input:
-            max_tokens = 1024  #! Hardcoded to 1024 for audio input to refrain from sending multiple requests to the API
+            st.success(f"{max_tokens=}")
+        elif (
+            model in ("gemma2-9b-it", "gemma-7b-it")
+            and st.session_state.use_audio_input
+        ):
+            max_tokens = 8192  #! Hardcoded to 8192 for audio input to refrain from sending multiple requests to the API
+            st.success(f"{max_tokens=}")
         elif model == "llava-v1.5-7b-4096-preview":
             max_tokens = st.slider(
                 "Max Tokens", 0, 4096, 1024, help="Max tokens in the response"
@@ -744,7 +806,10 @@ def sidebar_and_init() -> tuple:
                 "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
             )
 
-        if not st.session_state.use_audio_input:
+        if (
+            not st.session_state.use_audio_input
+            and not st.session_state.use_agentic_search
+        ):
             top_p = st.slider(
                 "Top P",
                 0.0,
@@ -754,6 +819,13 @@ def sidebar_and_init() -> tuple:
                 help="""A stochastic decoding method where the top p cumulative probability tokens (sorted w.r.t. probability)
                 are considered in each time step. The top p tokens are sampled randomly.""",
             )
+        elif (
+            st.session_state.use_agentic_search
+            and st.session_state.search_the_web
+            and not st.session_state.use_audio_input
+        ):
+            top_p = 0.9  #! Hardcoded to 0.9 for agentic search
+            st.success(f"{top_p=}")
         else:
             top_p = 0.8  #! Hardcoded to 0.8 for audio input to refrain from sending multiple requests to the API
 
@@ -867,6 +939,22 @@ def sidebar_and_init() -> tuple:
             args=("search_the_web",),
         )
 
+        if len(st.session_state.clear_chat_tracker) > 0:
+            if st.session_state.clear_chat_tracker[-1]:
+                st.session_state.use_plain_duckduckgo = (
+                    False  # ? Un-toggle the plain duckduckgo search
+                )
+
+        if len(st.session_state.clear_chat_tracker) > 0:
+            if st.session_state.clear_chat_tracker[-1]:
+                st.session_state.use_serp_api = False  # ? Un-toggle the serp api search
+
+        if len(st.session_state.clear_chat_tracker) > 0:
+            if st.session_state.clear_chat_tracker[-1]:
+                st.session_state.use_agentic_search = (
+                    False  # ? Un-toggle the agentic search
+                )
+
         # ! No SerpApi Integration for audio input to avoid multiple requests to the API
         # ? Just to reduce the number of requests to the API
         if st.session_state.search_the_web and not st.session_state.use_audio_input:
@@ -877,23 +965,52 @@ def sidebar_and_init() -> tuple:
                 help="Select the region to get the search results from.",
             )
 
-            max_results = st.slider(
-                "Max search results to refer",
-                10,
-                30,
-                12,
-                help="More results might take longer to process but will provide more context.",
+            if not st.session_state.use_agentic_search:
+                max_results = st.slider(
+                    "Max search results to refer",
+                    10,
+                    30,
+                    12,
+                    help="More results might take longer to process but will provide more context.",
+                )
+
+            st.toggle(
+                "DuckDuckGo",
+                st.session_state.use_plain_duckduckgo,
+                on_change=handle_search_toggle,
+                args=("use_plain_duckduckgo",),
+                help="Fast and reliable search tool to get quick answers.",
             )
 
-            st.session_state.use_serp_api = st.toggle(
-                "Perform DeepSearch",
-                False,
+            st.toggle(
+                "DeepSearch (Google)",
+                st.session_state.use_serp_api,
+                on_change=handle_search_toggle,
+                args=("use_serp_api",),
+                help="The most comprehensive search tool to get more informative answers.",
             )
+
+            agentic_search = st.toggle(
+                "DuckDuckGo Agentic (Experimental)",
+                st.session_state.use_agentic_search,
+                on_change=handle_search_toggle,
+                args=("use_agentic_search",),
+                help="Most powerful search tool to get more accurate answers. Recommended for paid plans.",
+            )
+
+            if agentic_search:
+                st.session_state.special_message3 = """
+                - **Agentic Search** is an experimental feature and has a long wait time\n
+                - Ideal for **Developer** and **Business** paid plans\n
+                - **Rate Limit will be more likely to be hit for free plans**\n
+                - **mixtral-8x7b-32768** will be the default model for **Agentic Search**\n
+                - **Max Tokens** will be set to `32768` to handle more tokens and **Top P** will be set to `0.9`\n
+                """
 
             # ? SerpApi Integration
             if st.session_state.use_serp_api:
                 st.session_state.special_message2 = """
-                Although DeepSearch gives more comprehensive search results, it might be pretty slow.\n
+                Though DeepSearch gives more comprehensive search results, it might be pretty slow.\n
                 """
 
                 serp_api_key = st.text_input(
@@ -924,15 +1041,16 @@ def sidebar_and_init() -> tuple:
                         st.session_state.serpapi_location = authentic_serpapi_location
                         st.session_state.old_user_serpapi_location = serpapi_location
 
-            if max_results >= 20 and model in (
-                "llama3-70b-8192",
-                "llama-3.1-70b-versatile",
-            ):
-                st.session_state.special_message = f"""
-                Although {model} is a powerful model, you might get slow responses.\n
-                It is recommended to use other models or to reduce the max search results.\n
-                mixtral-8x7b-32768 is faster and can handle more search results.
-                """
+            if max_results is not None:
+                if max_results >= 20 and model in (
+                    "llama3-70b-8192",
+                    "llama-3.1-70b-versatile",
+                ):
+                    st.session_state.special_message = f"""
+                    Although {model} is a powerful model, you might get slow responses.\n
+                    It is recommended to use other models or to reduce the max search results.\n
+                    mixtral-8x7b-32768 is faster and can handle more search results.
+                    """
 
         elif st.session_state.search_the_web and st.session_state.use_audio_input:
             region = st.selectbox(
@@ -1055,6 +1173,14 @@ def sidebar_and_init() -> tuple:
         st.session_state.special_message2 = ""
         st.session_state.special_message2_shown = True
 
+    if (
+        st.session_state.special_message3
+        and not st.session_state.special_message3_shown
+    ):
+        st.warning(st.session_state.special_message3)
+        st.session_state.special_message3 = ""
+        st.session_state.special_message3_shown = True
+
     return (
         model,
         temperature,
@@ -1103,6 +1229,7 @@ def body(
                                     upgrade to a paid plan to get more hard.\n\
                                         Let's start afresh shall we? 😁"
 
+    BODY = """"""
     img_links = None
     video_links = None
     MARKDOWN_PLACEHOLDER = None
@@ -1262,7 +1389,6 @@ def body(
 
             try:
                 with st.spinner("Generating the image..."):
-                    job_id = "1234"
                     job_id = generate_image(
                         payload=payload,
                         api_key=st.session_state.prodia_api_key,
@@ -1431,6 +1557,7 @@ def body(
                             and st.session_state.serp_api_key
                             and st.session_state.serpapi_location
                         ):
+                            print("Deep Search Selected")
                             (
                                 BODY,
                                 img_links,
@@ -1443,7 +1570,96 @@ def body(
                                 location=st.session_state.serpapi_location,
                                 max_results=max_results,
                             )
-                        else:  # ? DuckDuckGo Integration
+                        elif (
+                            st.session_state.use_agentic_search
+                        ):  # ? Agentic Search Integration
+                            try:
+                                objective_json = generate_search_strings(
+                                    prompt, api_key=st.session_state.groq_api_key
+                                )
+
+                                if objective_json:
+                                    search_icon = "🔍"
+                                    with st.expander(
+                                        "Strategy generated!", expanded=False
+                                    ):
+                                        for _, objective in enumerate(
+                                            objective_json["objectives"]
+                                        ):
+                                            st.info(
+                                                f"##### 🎯{objective['description']}"
+                                            )
+
+                                            for search_string in objective[
+                                                "search_strings"
+                                            ]:
+                                                st.markdown(
+                                                    f"- {search_icon} {search_string}"
+                                                )
+
+                                            st.markdown("---")
+
+                                        # Final Objective section
+                                        st.write("### 🏁 Final Objective")
+                                        st.success(objective_json["final_objective"])
+
+                                        # CSS for aesthetic appeal
+                                        st.markdown(
+                                            """
+                                        <style>
+                                        div[data-testid="stExpander"] {
+                                            background-color: var(--background-color);
+                                            border-radius: 10px;
+                                            padding: 10px;
+                                        }
+                                        div[data-testid="stExpander"] h2 {
+                                            color: var(--primary-color);
+                                        }
+                                        div[data-testid="stMarkdownContainer"] {
+                                            color: var(--text-color);
+                                            font-family: 'Arial', sans-serif;
+                                        }
+                                        </style>
+                                        """,
+                                            unsafe_allow_html=True,
+                                        )
+
+                                    (
+                                        BODY,
+                                        img_links,
+                                        video_links,
+                                        MARKDOWN_PLACEHOLDER,
+                                    ) = agentic_search_crawler(
+                                        objective_json=objective_json,
+                                        api_key=st.session_state.groq_api_key,
+                                    )
+
+                                    if BODY:
+                                        # Feed extracted information to the model for the model's reference
+                                        st.session_state.messages.append(
+                                            {
+                                                "role": "assistant",
+                                                "content": BODY,
+                                            }
+                                        )
+
+                                else:
+                                    st.error(
+                                        "Something went wrong while generating the search strategy. Please try again later."
+                                    )
+                                    st.session_state.is_groq_api_key_valid = False
+                            except Exception as e:
+                                print(e)
+                                st.error(
+                                    "Something went wrong with the Agentic Search. Please try again later."
+                                )
+                                st.session_state.is_groq_api_key_valid = False
+
+                            print("Agentic Search Selected")
+                        elif (
+                            st.session_state.use_plain_duckduckgo
+                        ):  # ? Plain DuckDuckGo Search
+                            print("Just using normal DuckDuckGo search")
                             BODY, img_links, video_links, MARKDOWN_PLACEHOLDER = (
                                 search_the_web(
                                     prompt,
@@ -1454,15 +1670,25 @@ def body(
                             )
 
                         if BODY:
+                            if st.session_state.use_agentic_search:
+                                print(BODY)
                             # Feed extracted information to the model for the model's reference
                             st.session_state.messages.append(
                                 {
-                                    # "role": "user",
-                                    "role": "assistant",  #! Just experimenting with the role
+                                    "role": "user",
+                                    # "role": "assistant",  #! Just experimenting with the role
                                     "content": BODY,
-                                }  # temporarily add the search results to the chat history
+                                }
                             )
 
+                if (
+                    st.session_state.use_agentic_search
+                    and st.session_state.search_the_web
+                ):
+                    with st.spinner(
+                        "Waiting for 10 seconds to reduce the rate limit error..."
+                    ):
+                        time.sleep(10)
                 # Give some feedback to the user while the model is generating the response
                 with st.spinner(spinner_message):
                     try:
@@ -1535,14 +1761,43 @@ def body(
                         )
 
                     except groq.RateLimitError:
-                        st.session_state.messages = []
-                        st.session_state.messages.append(
-                            {
-                                "role": "assistant",
-                                "content": "The user has exceeded the rate limit.",
-                            }
-                        )
-                        st.write("You have exceeded the rate limit.")
+                        if st.session_state.use_agentic_search and BODY:
+                            st.error(
+                                """
+                                - Rate Limit Error faced while processing the search results.\n
+                                - Results might be incomplete or unreliable.\n
+                                - Upgrade to a paid plan to increase the rate limit and avoid such errors.
+                                """
+                            )
+                            model_output = BODY
+                            st.session_state.messages.append(
+                                {
+                                    "role": "assistant",
+                                    "content": BODY,
+                                }
+                            )
+                            st.session_state.display_message.append(
+                                {
+                                    "role": "assistant",
+                                    "content": BODY,
+                                    "media": {
+                                        "audio_file_path": None,
+                                        "img_links": img_links,
+                                        "video_links": video_links,
+                                        "MARKDOWN_PLACEHOLDER": MARKDOWN_PLACEHOLDER,
+                                        "related_questions": related_questions,
+                                    },
+                                }
+                            )
+                        else:
+                            st.session_state.messages = []
+                            st.session_state.messages.append(
+                                {
+                                    "role": "assistant",
+                                    "content": "The user has exceeded the rate limit.",
+                                }
+                            )
+                            st.error("You have exceeded the rate limit.")
                         st.session_state.is_groq_api_key_valid = False
                         print("Rate limit error")
 
@@ -1727,7 +1982,10 @@ if __name__ == "__main__":
                     "Choose a sampler:",
                     [
                         "DPM++ 2M Karras",
+                        "DPM++ SDE Karras",
                         "Euler",
+                        "Euler a",
+                        "Heun",
                     ],
                     index=1,
                 )
