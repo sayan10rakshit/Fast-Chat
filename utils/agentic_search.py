@@ -93,7 +93,7 @@ def summarize(
     content_from_links,
     model,
     max_tokens,
-    api_key=os.environ["GROQ_API_KEY"],
+    api_key,
     objective="Summarize the following information crawled from several websites",
 ) -> str:
     """
@@ -181,10 +181,10 @@ def summarize(
 
 def search_summary(
     search_queries,
+    api_key,
     max_results=7,
     objective="summarize",
     region=REGIONS["India"],
-    api_key=os.environ["GROQ_API_KEY"],
 ) -> tuple:
     """
     ## Search the web using DuckDuckGo search engine and return the results.
@@ -311,7 +311,7 @@ def search_summary(
 
 def generate_search_strings(
     query: str,
-    api_key=os.environ["GROQ_API_KEY"],
+    api_key,
 ) -> dict:
     """
     ## Generate search strings based on the user query
@@ -415,9 +415,7 @@ def generate_search_strings(
         return None
 
 
-def agentic_search_crawler(
-    objective_json: dict, api_key=os.environ["GROQ_API_KEY"]
-) -> tuple:
+def agentic_search_crawler(objective_json: dict, api_key) -> tuple:
     """
     ## Perform an agentic search based on the user query.
 
