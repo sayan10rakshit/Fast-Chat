@@ -1,6 +1,7 @@
 import os
 import time
 import random
+import json
 import requests
 import base64
 from io import BytesIO
@@ -10,6 +11,11 @@ from groq import Groq
 from st_audiorec import st_audiorec
 import streamlit as st
 from PIL import Image
+
+import folium
+from folium import IFrame
+from folium.features import DivIcon
+from streamlit_folium import st_folium
 
 import elevenlabs
 from elevenlabs import VoiceSettings
@@ -287,6 +293,71 @@ def get_image_url(job_id: str, api_key: str):
 #! -------------------------------------------------------------------------------------------------
 
 
+#! Functions to generate maps popup
+#! -------------------------------------------------------------------------------------------------
+# Function to generate HTML popup with improved aesthetics
+def generate_popup(place):
+    phone = None
+    price = None
+    description = None
+    operating_hours = None
+    try:
+        phone = place["phone"]
+    except:
+        pass
+    try:
+        price = place["price"]
+    except:
+        pass
+    try:
+        description = place["description"]
+    except:
+        pass
+    try:
+        operating_hours = f"""
+        <ul style="margin: 5px 0; padding-left: 20px; list-style-type: disc;">
+            <li><b>Monday:</b> {place['operating_hours']['monday']}</li>
+            <li><b>Tuesday:</b> {place['operating_hours']['tuesday']}</li>
+            <li><b>Wednesday:</b> {place['operating_hours']['wednesday']}</li>
+            <li><b>Thursday:</b> {place['operating_hours']['thursday']}</li>
+            <li><b>Friday:</b> {place['operating_hours']['friday']}</li>
+            <li><b>Saturday:</b> {place['operating_hours']['saturday']}</li>
+            <li><b>Sunday:</b> {place['operating_hours']['sunday']}</li>
+        </ul>
+        """
+    except:
+        pass
+
+    return f"""
+    <div style="font-family: Arial, sans-serif;">
+        <div style="display: flex; flex-direction: row; align-items: flex-start;">
+            <div style="flex: 1; padding-right: 10px;">
+                <h2 style="margin: 0; color: #2E86C1;">{place['title']}</h2>
+                <p style="margin: 10px 0;"><b>Rating:</b> {place['rating']}</p>
+                <p style="margin: 10px 0;"><b>Reviews:</b> {place['reviews']}</p>
+                <p style="margin: 10px 0;"><b>Price:</b> {price}</p>
+                <p style="margin: 10px 0;"><b>Type:</b> {place['type']}</p>
+                <p style="margin: 10px 0;"><b>Address:</b> {place['address']}</p>
+                <p style="margin: 10px 0;"><b>Phone:</b> {phone}</p>
+                <p style="margin: 10px 0;"><b>Coordinates:</b> Lat: {place['gps_coordinates']['latitude']}, Lng: {place['gps_coordinates']['longitude']}</p>
+                <div style="margin-top: 10px;">
+                    <b>Operating Hours:</b>
+                    {operating_hours}
+                </div>
+                <p style="margin: 10px 0;"><b>Description:</b> {description}</p>
+            </div>
+            <div style="flex-shrink: 0;">
+                <img src="{place['thumbnail']}" alt="Thumbnail" style="width: 168px; height: 120px; border-radius: 10px;">
+            </div>
+        </div>
+    </div>
+    """
+
+
+#! End of Functions to generate maps popup
+#! -------------------------------------------------------------------------------------------------
+
+
 #! Function to display media content
 #! -------------------------------------------------------------------------------------------------
 def show_media(
@@ -297,6 +368,7 @@ def show_media(
     MARKDOWN_PLACEHOLDER=None,
     audio_file_path=None,
     related_questions=None,
+    maps_search_results=None,
 ) -> (
     None
 ):  #! This will only be executed (display the media content/s) if either YouTube or Web search is enabled
@@ -314,6 +386,7 @@ def show_media(
         MARKDOWN_PLACEHOLDER (str, optional): The list of web search references. Defaults to None.
         audio_file_path (str, optional): The path to the audio file generated from the model response. Defaults to None.
         related_questions (list, optional): The list of related questions extracted from the search results. Defaults to None.
+        maps_search_results (list, optional): The json data of the maps search results. Defaults to None.
     """
 
     # ? YOUTUBE VIDEO/SHORTS RESULTS after model response
@@ -403,6 +476,86 @@ def show_media(
                 with st.expander("Sources from the web"):
                     st.markdown(MARKDOWN_PLACEHOLDER)
 
+        # ? Display the maps search results
+        if maps_search_results is not None:
+            try:
+                map_data = json.loads(maps_search_results)
+                data = map_data["local_results"]
+                # Create a map centered at the first place's coordinates with a dark theme
+                m = folium.Map(
+                    location=[
+                        data[0]["gps_coordinates"]["latitude"],
+                        data[0]["gps_coordinates"]["longitude"],
+                    ],
+                    zoom_start=14,
+                    tiles="cartodbdark_matter",
+                )
+
+                for place in data:
+                    popup_html = generate_popup(place)
+                    iframe = IFrame(popup_html, width=500, height=300)
+                    popup = folium.Popup(iframe, max_width=500)
+
+                    # Add a place name with a high-visibility color and no overlapping
+                    folium.Marker(
+                        location=[
+                            place["gps_coordinates"]["latitude"],
+                            place["gps_coordinates"]["longitude"],
+                        ],
+                        icon=DivIcon(
+                            icon_size=(200, 36),
+                            icon_anchor=(0, 0),
+                            html=f"""
+                            <div style="
+                                display: inline-block; 
+                                font-size: 14px; 
+                                color: #FFD700;  /* Gold color for high visibility */
+                                background-color: rgba(0, 0, 0, 0.7); 
+                                padding: 5px 10px; 
+                                border-radius: 8px; 
+                                border: 2px solid #FFD700;
+                                white-space: nowrap;
+                                max-width: 200px;  
+                                overflow: hidden;
+                                text-overflow: ellipsis;">
+                                {place["title"]}
+                            </div>
+                            """,
+                        ),
+                    ).add_to(m)
+
+                    # Add marker with popup
+                    folium.Marker(
+                        location=[
+                            place["gps_coordinates"]["latitude"],
+                            place["gps_coordinates"]["longitude"],
+                        ],
+                        popup=popup,
+                        icon=folium.Icon(color="lightgray", icon="info-sign"),
+                    ).add_to(m)
+
+                # Fit map to bounds of all markers
+                locations = [
+                    [
+                        place["gps_coordinates"]["latitude"],
+                        place["gps_coordinates"]["longitude"],
+                    ]
+                    for place in data
+                ]
+                m.fit_bounds(locations)
+
+                with st.container():
+                    # Render map in Streamlit
+                    st_folium(m, width=725)
+                    if map_data["search_metadata"]["google_maps_url"]:
+                        st.markdown(
+                            f"🗺️ [View on Google Maps]({map_data['search_metadata']['google_maps_url']})",
+                            unsafe_allow_html=True,
+                        )
+
+            except Exception as e:
+                print(e)
+
         # ? Display additional related questions and their results
         if related_questions is not None:
             st.markdown("### Related Questions")
@@ -441,8 +594,6 @@ def show_media(
                                 st.markdown(
                                     f"[{question['displayed_link']}]({question['link']})"
                                 )
-
-        # TODO: Also give maps result
 
 
 #! End of Function to display media content
@@ -520,6 +671,7 @@ def sidebar_and_init() -> tuple:
                     "video_links": None,
                     "MARKDOWN_PLACEHOLDER": None,
                     "related_questions": None,
+                    "maps_search_results": None,
                 },
             }
         )
@@ -634,6 +786,7 @@ def sidebar_and_init() -> tuple:
             MARKDOWN_PLACEHOLDER=message["media"]["MARKDOWN_PLACEHOLDER"],
             audio_file_path=message["media"]["audio_file_path"],
             related_questions=message["media"]["related_questions"],
+            maps_search_results=message["media"]["maps_search_results"],
         )
 
     with st.sidebar:
@@ -685,13 +838,13 @@ def sidebar_and_init() -> tuple:
                 index=0,
             )
         #! Mandatorily use Mixtral for agentic search to handle large number of tokens
-        elif st.session_state.use_agentic_search and st.session_state.search_the_web:
-            model = st.selectbox(
-                "Select Model",
-                [
-                    "mixtral-8x7b-32768",
-                ],
-            )
+        # elif st.session_state.use_agentic_search and st.session_state.search_the_web:
+        #     model = st.selectbox(
+        #         "Select Model",
+        #         [
+        #             "mixtral-8x7b-32768",
+        #         ],
+        #     )
         else:
             model = st.selectbox(
                 "Select Model",
@@ -737,10 +890,7 @@ def sidebar_and_init() -> tuple:
                 width=125,
             )
 
-        if (
-            not st.session_state.use_audio_input
-            and not st.session_state.use_agentic_search
-        ):
+        if not st.session_state.use_audio_input and not st.session_state.search_the_web:
             temperature = st.slider(
                 "Temperature",
                 0.0,
@@ -806,10 +956,7 @@ def sidebar_and_init() -> tuple:
                 "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
             )
 
-        if (
-            not st.session_state.use_audio_input
-            and not st.session_state.use_agentic_search
-        ):
+        if not st.session_state.use_audio_input and not st.session_state.search_the_web:
             top_p = st.slider(
                 "Top P",
                 0.0,
@@ -898,16 +1045,16 @@ def sidebar_and_init() -> tuple:
                     See more details [here](https://elevenlabs.io/)""",
                 )
 
-                _ = st.selectbox(
-                    "Select Voice",
-                    [
-                        f"{agent_name} ({voice_name_to_id[agent_name]['type']})"
-                        for agent_name in voice_name_to_id.keys()
-                    ],
-                    index=2,
-                    key="voice_name",
-                    help="Select the voice for the audio output.",
-                )
+            _ = st.selectbox(
+                "Select Voice",
+                [
+                    f"{agent_name} ({voice_name_to_id[agent_name]['type']})"
+                    for agent_name in voice_name_to_id.keys()
+                ],
+                index=2,
+                key="voice_name",
+                help="Select the voice for the audio output.",
+            )
 
         #! Logic to clear the chat history, remove any audio files generated, reinitialize the toggles and reload the page
         if len(st.session_state.clear_chat_tracker) > 0:
@@ -1133,6 +1280,7 @@ def sidebar_and_init() -> tuple:
                         "video_links": None,
                         "MARKDOWN_PLACEHOLDER": None,
                         "related_questions": None,
+                        "maps_search_results": None,
                     },
                 }
             ]
@@ -1215,13 +1363,14 @@ def body(
         region (str, optional): The region selected by the user. Defaults to None.
         max_results (int, optional): The maximum results to refer from the search. Defaults to None.
 
-    Returns:
-        img_links (list): The list of image links extracted from the search results.
-        video_links (list): The list of video links extracted from the search results.
-        MARKDOWN_PLACEHOLDER (str): The markdown placeholder for the search results.
-        related_questions (list): The list of related questions extracted from the search results.
-        model_output (str): The model response.
-        audio_file_path (str): The path to the audio file generated from the model response.
+    Returns
+        -  img_links (list): The list of image links extracted from the search results.
+        -  video_links (list): The list of video links extracted from the search results.
+        -  MARKDOWN_PLACEHOLDER (str): The markdown placeholder for the search results.
+        -  related_questions (list): The list of related questions extracted from the search results.
+        -  maps_search_results (str): The search results for the maps search.
+        -  model_output (str): The model response.
+        -  audio_file_path (str): The path to the audio file generated from the model response.
     """
 
     GENERIC_RESPONSE = "Sorry, that's on me.\nDue to limited hardware resources in \
@@ -1236,6 +1385,7 @@ def body(
     related_questions = None
     audio_file_path = None
     model_output = None
+    maps_search_results = None
 
     if (
         prompt and st.session_state.show_file_uploader
@@ -1303,6 +1453,7 @@ def body(
                                             "video_links": None,
                                             "MARKDOWN_PLACEHOLDER": None,
                                             "related_questions": None,
+                                            "maps_search_results": None,
                                         },
                                     },
                                 )
@@ -1318,6 +1469,7 @@ def body(
                                             "video_links": None,
                                             "MARKDOWN_PLACEHOLDER": None,
                                             "related_questions": None,
+                                            "maps_search_results": None,
                                         },
                                     }
                                 )
@@ -1448,6 +1600,7 @@ def body(
                                         "video_links": None,
                                         "MARKDOWN_PLACEHOLDER": None,
                                         "related_questions": None,
+                                        "maps_search_results": None,
                                     },
                                 }
                             )
@@ -1461,6 +1614,7 @@ def body(
                                         "video_links": None,
                                         "MARKDOWN_PLACEHOLDER": None,
                                         "related_questions": None,
+                                        "maps_search_results": None,
                                     },
                                 }
                             )
@@ -1512,6 +1666,7 @@ def body(
                             "video_links": None,
                             "MARKDOWN_PLACEHOLDER": None,
                             "related_questions": None,
+                            "maps_search_results": None,
                         },
                     }
                 )
@@ -1564,8 +1719,10 @@ def body(
                                 video_links,
                                 MARKDOWN_PLACEHOLDER,
                                 related_questions,
+                                maps_search_results,
                             ) = get_web_results(
                                 api_key=st.session_state.serp_api_key,
+                                groq_api_key=st.session_state.groq_api_key,
                                 query=prompt,
                                 location=st.session_state.serpapi_location,
                                 max_results=max_results,
@@ -1756,6 +1913,7 @@ def body(
                                     "video_links": video_links,
                                     "MARKDOWN_PLACEHOLDER": MARKDOWN_PLACEHOLDER,
                                     "related_questions": related_questions,
+                                    "maps_search_results": maps_search_results,
                                 },
                             }
                         )
@@ -1786,6 +1944,7 @@ def body(
                                         "video_links": video_links,
                                         "MARKDOWN_PLACEHOLDER": MARKDOWN_PLACEHOLDER,
                                         "related_questions": related_questions,
+                                        "maps_search_results": None,
                                     },
                                 }
                             )
@@ -1849,6 +2008,7 @@ def body(
         video_links,
         MARKDOWN_PLACEHOLDER,
         related_questions,
+        maps_search_results,
         model_output,
         audio_file_path,
     )
@@ -1868,6 +2028,7 @@ if __name__ == "__main__":
     video_links = None
     MARKDOWN_PLACEHOLDER = None
     related_questions = None
+    maps_search_results = None
     current_prompt = None
     audio_data = None
     FILE_NAME = "audio.wav"
@@ -2053,6 +2214,7 @@ if __name__ == "__main__":
             video_links,
             MARKDOWN_PLACEHOLDER,
             related_questions,
+            maps_search_results,
             model_output,
             audio_file_path,
         ) = body(
@@ -2070,6 +2232,7 @@ if __name__ == "__main__":
             MARKDOWN_PLACEHOLDER,
             audio_file_path,
             related_questions,
+            maps_search_results,
         )
 
         st.info(

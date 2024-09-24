@@ -78,6 +78,7 @@ yarl = "==1.9.4"
 youtube-transcript-api = "==0.6.2"
 streamlit-audiorec = "*"
 elevenlabs = "*"
+streamlit-folium = "*"
 
 [dev-packages]
 

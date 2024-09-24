@@ -293,7 +293,7 @@ def search_summary(
 
         #! This is deliberately done to mitigate the rate limit errors faced for each model
         # * We can play around with the weights to see which model works best
-        model, max_tokens = random.choices(model_list, weights=[10, 4, 4, 4, 1], k=1)[0]
+        model, max_tokens = random.choices(model_list, weights=[8, 4, 4, 4, 1], k=1)[0]
         distilled_info += summarize(
             content_from_links=all_info,
             model=model,

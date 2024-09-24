@@ -1,3 +1,7 @@
+import json
+import groq
+from groq import Groq
+from serpapi import GoogleSearch
 from serpapi import GoogleSearch
 from concurrent.futures import ThreadPoolExecutor
 from utils.deep_search import fetch_text
@@ -278,6 +282,7 @@ def search_videos(
 
 def get_web_results(
     api_key=None,
+    groq_api_key=None,
     query=None,
     location="Kolkata, West Bengal, India",
     deep_search=False,
@@ -291,15 +296,18 @@ def get_web_results(
 
     Args:
         api_key (str): The API key for SerpApi.
+        groq_api_key (str): The API key for Groq.
         query (str): The query to search the web.
         location (str): The location to search in.
         max_results (int): The maximum number of results to return.
 
-    Returns:
-        body (str): The body containing information from the search results.
-        img_links (list): The list of image links from the search results.
-        video_links (list): The list of video links from the search results.
-        MARKDOWN_PLACEHOLDER (str): The placeholder containing the references to the search results.
+    Returns
+        - body (str): The body containing information from the search results.
+        - img_links (list): The list of image links from the search results.
+        - video_links (list): The list of video links from the search results.
+        - MARKDOWN_PLACEHOLDER (str): The placeholder containing the references to the search results.
+        - related_questions (dict): The dict of related questions from the search results.
+        - map_results (str): The dict of map results from the search results.
     """
 
     params = {
@@ -330,4 +338,95 @@ def get_web_results(
         if video_links:
             yt_links = filter_links(" ".join(video_links))
 
-    return body, img_links, yt_links, markdown_placeholder, related_questions
+    try:
+        prompt = f"""
+        # Google Maps Agent Prompt Template
+
+        You are an AI agent designed to determine whether a user's query requires a map to enhance the response, and if so, to generate an appropriate search query for Google Maps. Your task is to analyze the user's intent and respond accordingly.
+
+        ## Instructions:
+
+        1. Carefully read and understand the user's query.
+        2. Determine if the query involves:
+        - Specific locations or places
+        - Geographic information
+        - Spatial relationships
+        - Travel or navigation
+        - Local services or attractions
+        3. If the query does not require a map, respond with an empty string.
+        4. If a map would enhance the response, generate a concise, relevant search query for Google Maps.
+
+        ## Criteria for Generating a Maps Query:
+
+        - The query asks about specific places or locations
+        - The user is seeking information about local businesses, services, or attractions
+        - The query involves travel, directions, or navigation
+        - Geographic or spatial information would significantly enhance the response
+        - The user is looking for multiple locations of a particular type in an area
+
+        ## Response Format:
+
+        - If no map is needed: ""
+        - If a map is needed: "Concise search query for Google Maps"
+
+        ## Examples:
+
+        User Query: "What's the capital of France?"
+        Response: "Paris"
+
+        User Query: "How do I write a for loop in Python?"
+        Response: ""
+
+        User Query: "Find me the best pizza places in Chicago"
+        Response: "Best pizza restaurants in Chicago"
+
+        User Query: "My Samsung phone is damaged, what can I do?"
+        Response: "Nearest Samsung mobile customer service center"
+
+        Now, based on the user's query, determine if a map is needed and generate an appropriate response following this template.
+        
+        User Query:
+        {query}
+        """
+
+        gmaps_client = Groq(api_key=groq_api_key)
+        completion = gmaps_client.chat.completions.create(
+            model="gemma2-9b-it",
+            messages=[
+                {"role": "user", "content": prompt},
+            ],
+            temperature=1,
+            max_tokens=8192,
+            top_p=0.9,
+            stream=False,
+            stop=None,
+            seed=42,
+        )
+
+        gmaps_query = completion.choices[0].message.content
+        if gmaps_query:
+            print(f"Google Maps Query: {gmaps_query}")
+            gmaps_params = {
+                "engine": "google_maps",
+                "q": gmaps_query,
+                "api_key": api_key,
+            }
+
+            search = GoogleSearch(gmaps_params)
+            maps_search_results = json.dumps(search.get_dict())
+        else:
+            maps_search_results = None
+            print("Google Maps not needed.")
+
+    except Exception as e:
+        print(e)
+        maps_search_results = None
+
+    return (
+        body,
+        img_links,
+        yt_links,
+        markdown_placeholder,
+        related_questions,
+        maps_search_results,
+    )
