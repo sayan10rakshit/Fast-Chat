@@ -7,8 +7,6 @@
 
 <img src="utils/static/Fast-Chat_avatar.gif" alt="Fast-Chat" width="400" align="right" />
 
-**Fast-Chat** is a state-of-the-art AI chat assistant designed to facilitate real-time, seamless interactions. Leveraging **GROQ's** cutting-edge **[Language Processing Unit<sup>TM</sup>](https://wow.groq.com/why-groq/)**, Fast-Chat delivers prompt and insightful responses, empowering users with instant answers and dynamic conversations.
-
 ## Key Features
 
 - ⚡ **Instant Responses**: Enjoy lightning-fast replies powered by GROQ’s advanced AI technology, ensuring a smooth conversation flow.
