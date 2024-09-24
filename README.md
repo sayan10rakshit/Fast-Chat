@@ -1,16 +1,13 @@
-Here's an enhanced and professional version of the GitHub repository README for **Fast-Chat** with a modern, polished style:
 
 ---
 
 # ⚡ Fast-Chat: Elevating Lightning-Fast Conversations with AI
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://fast-chat.streamlit.app/)
+
 <img src="utils/static/Fast-Chat_avatar.gif" alt="Fast-Chat" width="400" align="right" />
 
 **Fast-Chat** is a state-of-the-art AI chat assistant designed to facilitate real-time, seamless interactions. Leveraging **GROQ's** cutting-edge **[Language Processing Unit<sup>TM</sup>](https://wow.groq.com/why-groq/)**, Fast-Chat delivers prompt and insightful responses, empowering users with instant answers and dynamic conversations.
-
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://fast-chat.streamlit.app/)
-
----
 
 ## Key Features
 
