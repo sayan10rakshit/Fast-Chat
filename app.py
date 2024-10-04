@@ -549,7 +549,11 @@ def show_media(
                     st_folium(m, width=725)
                     if map_data["search_metadata"]["google_maps_url"]:
                         st.markdown(
-                            f"🗺️ [View on Google Maps]({map_data['search_metadata']['google_maps_url']})",
+                            '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">',
+                            unsafe_allow_html=True,
+                        )
+                        st.markdown(
+                            f"<i class='fab fa-google'></i>&nbsp;&nbsp;&nbsp;[View on Google Maps]({map_data['search_metadata']['google_maps_url']})",
                             unsafe_allow_html=True,
                         )
 
@@ -826,7 +830,7 @@ def sidebar_and_init() -> tuple:
             st.session_state.show_file_uploader
             and not st.session_state.successfully_ran
         ):
-            #! Use Llava only if one of the following conditions are met
+            #! Use Llava & Llama 3.2 only if one of the following conditions are met
             #!  - If the user has uploaded a file and this is the first time the page is being loaded OR
             #!  - If the user has uploaded a file and the model has not successfully run
             #! Thus if the model has successfully run, then the user has to untoggle and retoggle the file uploader to run the model again
@@ -834,8 +838,9 @@ def sidebar_and_init() -> tuple:
                 "Select Model",
                 [
                     "llava-v1.5-7b-4096-preview",
+                    "llama-3.2-11b-vision-preview",
                 ],
-                index=0,
+                index=1,
             )
         #! Mandatorily use Mixtral for agentic search to handle large number of tokens
         # elif st.session_state.use_agentic_search and st.session_state.search_the_web:
@@ -852,12 +857,16 @@ def sidebar_and_init() -> tuple:
                     "gemma2-9b-it",
                     "gemma-7b-it",
                     "mixtral-8x7b-32768",
+                    "llama-3.2-1b-preview",
+                    "llama-3.2-3b-preview",
+                    "llama-3.2-11b-text-preview",
+                    "llama-3.2-90b-text-preview",
                     "llama-3.1-8b-instant",
-                    "llama3-8b-8192",
                     "llama-3.1-70b-versatile",
+                    "llama3-8b-8192",
                     "llama3-70b-8192",
                 ],
-                index=3,
+                index=7,
             )
 
         if "gemma" in model:
@@ -936,6 +945,31 @@ def sidebar_and_init() -> tuple:
             max_tokens = 8000
             st.success(f"{max_tokens=}")
         elif (
+            model
+            in (
+                "llama-3.2-1b-preview",
+                "llama-3.2-3b-preview",
+                "llama-3.2-11b-text-preview",
+                "llama-3.2-90b-text-preview",
+            )
+            and not st.session_state.use_audio_input
+        ):
+            max_tokens = st.slider(
+                "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
+            )
+        elif (
+            model
+            in (
+                "llama-3.2-1b-preview",
+                "llama-3.2-3b-preview",
+                "llama-3.2-11b-text-preview",
+                "llama-3.2-90b-text-preview",
+            )
+            and st.session_state.use_audio_input
+        ):
+            max_tokens = 8192
+            st.success(f"{max_tokens=}")
+        elif (
             model in ("llama3-70b-8192", "llama3-8b-8192")
             and st.session_state.use_audio_input
         ):
@@ -950,6 +984,10 @@ def sidebar_and_init() -> tuple:
         elif model == "llava-v1.5-7b-4096-preview":
             max_tokens = st.slider(
                 "Max Tokens", 0, 4096, 1024, help="Max tokens in the response"
+            )
+        elif model == "llama-3.2-11b-vision-preview":
+            max_tokens = st.slider(
+                "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
             )
         else:
             max_tokens = st.slider(
@@ -1389,7 +1427,7 @@ def body(
 
     if (
         prompt and st.session_state.show_file_uploader
-    ):  #! Implement LLaVA model for image input
+    ):  #! Implement LLaVA/Llama 3.2 model for image input
         if st.session_state.groq_api_key == "":
             st.warning("Please enter your GROQ API key.")
         else:
