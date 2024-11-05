@@ -839,8 +839,9 @@ def sidebar_and_init() -> tuple:
                 [
                     "llava-v1.5-7b-4096-preview",
                     "llama-3.2-11b-vision-preview",
+                    "llama-3.2-90b-vision-preview",
                 ],
-                index=1,
+                index=2,
             )
         #! Mandatorily use Mixtral for agentic search to handle large number of tokens
         # elif st.session_state.use_agentic_search and st.session_state.search_the_web:
