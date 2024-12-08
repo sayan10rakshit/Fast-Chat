@@ -811,13 +811,16 @@ def sidebar_and_init() -> tuple:
 
         if (
             st.session_state.use_audio_input
-        ):  #! Only the models having lesser parameters are used for audio input
+        ):  #! Only the models having lesser parameters are used for audio input since they have
+            #! higher rate limits
             model = st.selectbox(
                 "Select Model",
                 [
                     "gemma2-9b-it",
                     "gemma-7b-it",
                     "mixtral-8x7b-32768",
+                    "llama-3.2-1b-preview",
+                    "llama-3.2-3b-preview",
                     "llama-3.1-8b-instant",
                     "llama3-8b-8192",
                 ],
@@ -830,27 +833,19 @@ def sidebar_and_init() -> tuple:
             st.session_state.show_file_uploader
             and not st.session_state.successfully_ran
         ):
-            #! Use Llava & Llama 3.2 only if one of the following conditions are met
+            #! Just show Llama 3.2 (for vision) only if one of the following conditions are met
             #!  - If the user has uploaded a file and this is the first time the page is being loaded OR
             #!  - If the user has uploaded a file and the model has not successfully run
-            #! Thus if the model has successfully run, then the user has to untoggle and retoggle the file uploader to run the model again
+            #! Thus if the model has successfully run, then the file uploader will be untoggled by default
+            #! The user has to untoggle and retoggle the file uploader to run the model again
             model = st.selectbox(
                 "Select Model",
                 [
-                    "llava-v1.5-7b-4096-preview",
                     "llama-3.2-11b-vision-preview",
                     "llama-3.2-90b-vision-preview",
                 ],
                 index=2,
             )
-        #! Mandatorily use Mixtral for agentic search to handle large number of tokens
-        # elif st.session_state.use_agentic_search and st.session_state.search_the_web:
-        #     model = st.selectbox(
-        #         "Select Model",
-        #         [
-        #             "mixtral-8x7b-32768",
-        #         ],
-        #     )
         else:
             model = st.selectbox(
                 "Select Model",
@@ -858,16 +853,18 @@ def sidebar_and_init() -> tuple:
                     "gemma2-9b-it",
                     "gemma-7b-it",
                     "mixtral-8x7b-32768",
+                    "llama-3.3-70b-specdec",
+                    "llama-3.3-70b-versatile",
                     "llama-3.2-1b-preview",
                     "llama-3.2-3b-preview",
-                    "llama-3.2-11b-text-preview",
-                    "llama-3.2-90b-text-preview",
+                    "llama-3.2-11b-vision-preview",
+                    "llama-3.2-90b-vision-preview",
                     "llama-3.1-8b-instant",
                     "llama-3.1-70b-versatile",
                     "llama3-8b-8192",
                     "llama3-70b-8192",
                 ],
-                index=7,
+                index=3,
             )
 
         if "gemma" in model:
@@ -878,7 +875,7 @@ def sidebar_and_init() -> tuple:
             )
 
         elif "llama" in model:
-            st.markdown("[**Model by**](https://llama.meta.com/)")
+            st.markdown("[**Model by**](https://www.llama.com/)")
             st.image(
                 "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/320px-Meta_Platforms_Inc._logo.svg.png",
                 width=125,
@@ -888,15 +885,6 @@ def sidebar_and_init() -> tuple:
             st.markdown("[**Model by**](https://mistral.ai/news/mixtral-of-experts/)")
             st.image(
                 "https://upload.wikimedia.org/wikipedia/de/thumb/b/b7/Mistral_AI_Logo.png/320px-Mistral_AI_Logo.png",
-                width=125,
-            )
-
-        elif "llava" in model:
-            st.markdown(
-                "[**Model by**](https://www.microsoft.com/en-us/research/project/llava-large-language-and-vision-assistant/)"
-            )
-            st.image(
-                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Microsoft_logo.svg/320px-Microsoft_logo.svg.png",
                 width=125,
             )
 
@@ -913,25 +901,23 @@ def sidebar_and_init() -> tuple:
             temperature = 1.0  #! Hardcoded to 1.0 for audio input to refrain from sending multiple requests to the API
             st.success(f"{temperature=}")
 
-        if (
+        if model == "mixtral-8x7b-32768" and st.session_state.use_audio_input:
+            max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
+            st.success(f"{max_tokens=}")
+        elif (
             model == "mixtral-8x7b-32768"
             and not st.session_state.use_audio_input
-            and not st.session_state.use_agentic_search
         ):
             max_tokens = st.slider(
                 "Max Tokens", 0, 32768, 1024, help="Max tokens in the response"
             )
-        elif (
-            model == "mixtral-8x7b-32768"
-            and not st.session_state.use_audio_input
-            and st.session_state.use_agentic_search
-            and st.session_state.search_the_web
-        ):
-            max_tokens = 32768  #! Hardcoded to 32768 for agentic search to handle large number of tokens
+        elif model == "llama-3.3-70b-versatile" and st.session_state.use_audio_input:
+            max_tokens = 131072  #! Hardcoded to 131072 for audio input to refrain from sending multiple requests to the API
             st.success(f"{max_tokens=}")
-        elif model == "mixtral-8x7b-32768" and st.session_state.use_audio_input:
-            max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
-            st.success(f"{max_tokens=}")
+        elif model == "llama-3.3-70b-versatile" and not st.session_state.use_audio_input:
+            max_tokens = st.slider(
+                "Max Tokens", 0, 131072, 8192, help="Max tokens in the response"
+            )
         elif (
             model in ("llama-3.1-8b-instant", "llama-3.1-70b-versatile")
             and not st.session_state.use_audio_input
@@ -950,43 +936,33 @@ def sidebar_and_init() -> tuple:
             in (
                 "llama-3.2-1b-preview",
                 "llama-3.2-3b-preview",
-                "llama-3.2-11b-text-preview",
-                "llama-3.2-90b-text-preview",
-            )
-            and not st.session_state.use_audio_input
-        ):
-            max_tokens = st.slider(
-                "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
-            )
-        elif (
-            model
-            in (
-                "llama-3.2-1b-preview",
-                "llama-3.2-3b-preview",
-                "llama-3.2-11b-text-preview",
-                "llama-3.2-90b-text-preview",
+                "llama3-70b-8192",
+                "llama3-8b-8192",
+                "gemma2-9b-it",
+                "gemma-7b-it",
+                "llama-3.2-11b-vision-preview",
+                "llama-3.2-90b-vision-preview",
+                "llama-3.3-70b-specdec",
             )
             and st.session_state.use_audio_input
         ):
             max_tokens = 8192
             st.success(f"{max_tokens=}")
         elif (
-            model in ("llama3-70b-8192", "llama3-8b-8192")
-            and st.session_state.use_audio_input
-        ):
-            max_tokens = 8192  #! Hardcoded to 8192 for audio input to refrain from sending multiple requests to the API
-            st.success(f"{max_tokens=}")
-        elif (
-            model in ("gemma2-9b-it", "gemma-7b-it")
-            and st.session_state.use_audio_input
-        ):
-            max_tokens = 8192  #! Hardcoded to 8192 for audio input to refrain from sending multiple requests to the API
-            st.success(f"{max_tokens=}")
-        elif model == "llava-v1.5-7b-4096-preview":
-            max_tokens = st.slider(
-                "Max Tokens", 0, 4096, 1024, help="Max tokens in the response"
+            model
+            in (
+                "llama-3.2-1b-preview",
+                "llama-3.2-3b-preview",
+                "llama3-70b-8192",
+                "llama3-8b-8192",
+                "gemma2-9b-it",
+                "gemma-7b-it",
+                "llama-3.2-11b-vision-preview",
+                "llama-3.2-90b-vision-preview",
+                "llama-3.3-70b-specdec",
             )
-        elif model == "llama-3.2-11b-vision-preview":
+            and not st.session_state.use_audio_input
+        ):
             max_tokens = st.slider(
                 "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
             )
@@ -1187,10 +1163,9 @@ def sidebar_and_init() -> tuple:
             if agentic_search:
                 st.session_state.special_message3 = """
                 - **Agentic Search** is an experimental feature and has a long wait time\n
-                - Ideal for **Developer** and **Business** paid plans\n
+                - Ideal for GROQ paid plans\n
                 - **Rate Limit will be more likely to be hit for free plans**\n
-                - **mixtral-8x7b-32768** will be the default model for **Agentic Search**\n
-                - **Max Tokens** will be set to `32768` to handle more tokens and **Top P** will be set to `0.9`\n
+                - We highly recommend **llama-3.3-70b-versatile** for **Agentic Search**\n
                 """
 
             # ? SerpApi Integration
@@ -1428,7 +1403,7 @@ def body(
 
     if (
         prompt and st.session_state.show_file_uploader
-    ):  #! Implement LLaVA/Llama 3.2 model for image input
+    ):  #! Implement Llama 3.2 model for image input
         if st.session_state.groq_api_key == "":
             st.warning("Please enter your GROQ API key.")
         else:
