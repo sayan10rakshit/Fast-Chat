@@ -289,7 +289,7 @@ def search_summary(
             ("llama3-70b-8192", 8192),
             ("llama3-8b-8192", 8192),
             ("mixtral-8x7b-32768", 32768),
-            ("llama-3.3-70b-versatile", 131072),
+            ("llama-3.3-70b-versatile", 32768),
             ("llama-3.3-70b-specdec", 8192),
         ]
 
@@ -388,7 +388,7 @@ def generate_search_strings(
 
     model_list = [
         ("llama-3.1-70b-versatile", 8000),
-        ("llama-3.3-70b-versatile", 131072),
+        ("llama-3.3-70b-versatile", 32768),
         ("llama-3.3-70b-specdec", 8192),
         ("llama3-70b-8192", 8192),
         ("mixtral-8x7b-32768", 32768),

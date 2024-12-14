@@ -399,7 +399,7 @@ def show_media(
             with st.chat_message(role):
                 st.markdown(model_output)
 
-            if audio_file_path and st.session_state.use_audio_output:
+            if audio_file_path:
                 st.audio(
                     audio_file_path,
                     format="audio/mp3",
@@ -912,11 +912,11 @@ def sidebar_and_init() -> tuple:
                 "Max Tokens", 0, 32768, 1024, help="Max tokens in the response"
             )
         elif model == "llama-3.3-70b-versatile" and st.session_state.use_audio_input:
-            max_tokens = 131072  #! Hardcoded to 131072 for audio input to refrain from sending multiple requests to the API
+            max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
             st.success(f"{max_tokens=}")
         elif model == "llama-3.3-70b-versatile" and not st.session_state.use_audio_input:
             max_tokens = st.slider(
-                "Max Tokens", 0, 131072, 8192, help="Max tokens in the response"
+                "Max Tokens", 0, 32768, 8192, help="Max tokens in the response"
             )
         elif (
             model in ("llama-3.1-8b-instant", "llama-3.1-70b-versatile")
