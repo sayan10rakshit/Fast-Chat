@@ -844,7 +844,7 @@ def sidebar_and_init() -> tuple:
                     "llama-3.2-11b-vision-preview",
                     "llama-3.2-90b-vision-preview",
                 ],
-                index=2,
+                index=1,
             )
         else:
             model = st.selectbox(
