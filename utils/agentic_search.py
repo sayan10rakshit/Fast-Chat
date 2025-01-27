@@ -284,13 +284,13 @@ def search_summary(
                 return None, None, None, None
 
         model_list = [
-            ("llama-3.1-70b-versatile", 8000),
             ("llama-3.1-8b-instant", 8000),
             ("llama3-70b-8192", 8192),
             ("llama3-8b-8192", 8192),
             ("mixtral-8x7b-32768", 32768),
             ("llama-3.3-70b-versatile", 32768),
             ("llama-3.3-70b-specdec", 8192),
+            ("deepseek-r1-distill-llama-70b", 131072),
         ]
 
         #! This is deliberately done to mitigate the rate limit errors faced for each model
@@ -387,15 +387,17 @@ def generate_search_strings(
     )
 
     model_list = [
-        ("llama-3.1-70b-versatile", 8000),
+        ("llama-3.1-8b-instant", 8000),
+        ("llama3-70b-8192", 8192),
+        ("llama3-8b-8192", 8192),
+        ("mixtral-8x7b-32768", 32768),
         ("llama-3.3-70b-versatile", 32768),
         ("llama-3.3-70b-specdec", 8192),
-        ("llama3-70b-8192", 8192),
-        ("mixtral-8x7b-32768", 32768),
+        ("deepseek-r1-distill-llama-70b", 131072),
     ]
 
     #! This is deliberately done to mitigate the rate limit errors faced for each model
-    model, max_tokens = random.choices(model_list, weights=[1, 1, 1, 1, 1], k=1)[0]
+    model, max_tokens = random.choices(model_list, weights=[1, 1, 1, 1, 1, 1, 1], k=1)[0]
     print(f"\n\nModel selected for generating search strings: {model}\n\n")
 
     client = Groq(api_key=api_key)

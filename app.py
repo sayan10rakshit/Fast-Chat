@@ -851,7 +851,6 @@ def sidebar_and_init() -> tuple:
                 "Select Model",
                 [
                     "gemma2-9b-it",
-                    "gemma-7b-it",
                     "mixtral-8x7b-32768",
                     "llama-3.3-70b-specdec",
                     "llama-3.3-70b-versatile",
@@ -860,11 +859,11 @@ def sidebar_and_init() -> tuple:
                     "llama-3.2-11b-vision-preview",
                     "llama-3.2-90b-vision-preview",
                     "llama-3.1-8b-instant",
-                    "llama-3.1-70b-versatile",
                     "llama3-8b-8192",
                     "llama3-70b-8192",
+                    "deepseek-r1-distill-llama-70b",
                 ],
-                index=3,
+                index=11,
             )
 
         if "gemma" in model:
@@ -904,17 +903,29 @@ def sidebar_and_init() -> tuple:
         if model == "mixtral-8x7b-32768" and st.session_state.use_audio_input:
             max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
             st.success(f"{max_tokens=}")
+        elif model == "mixtral-8x7b-32768" and not st.session_state.use_audio_input:
+            max_tokens = st.slider(
+                "Max Tokens", 0, 32768, 1024, help="Max tokens in the response"
+            )
+        if (
+            model == "deepseek-r1-distill-llama-70b"
+            and st.session_state.use_audio_input
+        ):
+            max_tokens = 131072  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
+            st.success(f"{max_tokens=}")
         elif (
-            model == "mixtral-8x7b-32768"
+            model == "deepseek-r1-distill-llama-70b"
             and not st.session_state.use_audio_input
         ):
             max_tokens = st.slider(
-                "Max Tokens", 0, 32768, 1024, help="Max tokens in the response"
+                "Max Tokens", 0, 131072, 32768, help="Max tokens in the response"
             )
         elif model == "llama-3.3-70b-versatile" and st.session_state.use_audio_input:
             max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
             st.success(f"{max_tokens=}")
-        elif model == "llama-3.3-70b-versatile" and not st.session_state.use_audio_input:
+        elif (
+            model == "llama-3.3-70b-versatile" and not st.session_state.use_audio_input
+        ):
             max_tokens = st.slider(
                 "Max Tokens", 0, 32768, 8192, help="Max tokens in the response"
             )
