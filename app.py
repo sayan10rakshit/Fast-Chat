@@ -2112,7 +2112,13 @@ if __name__ == "__main__":
                     with open(abs_path, "rb") as file:
                         transcription = whisper_client.audio.transcriptions.create(
                             file=(abs_path, file.read()),
-                            model="whisper-large-v3",
+                            model=random.choice(
+                                [
+                                    "whisper-large-v3",
+                                    "whisper-large-v3-turbo",
+                                    "distil-whisper-large-v3-en",
+                                ]
+                            ),
                         )
 
                     if transcription:
