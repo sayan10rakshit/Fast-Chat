@@ -176,14 +176,22 @@ def handle_search_toggle(toggle_name: str) -> None:
         st.session_state.use_agentic_search = True
         st.session_state.use_serp_api = False
         st.session_state.use_plain_duckduckgo = False
+        st.session_state.use_compound_beta = False
     elif toggle_name == "use_serp_api":
         st.session_state.use_serp_api = True
         st.session_state.use_agentic_search = False
         st.session_state.use_plain_duckduckgo = False
+        st.session_state.use_compound_beta = False
     elif toggle_name == "use_plain_duckduckgo":
         st.session_state.use_plain_duckduckgo = True
         st.session_state.use_agentic_search = False
         st.session_state.use_serp_api = False
+        st.session_state.use_compound_beta = False
+    elif toggle_name == "use_compound_beta":
+        st.session_state.use_compound_beta = True
+        st.session_state.use_agentic_search = False
+        st.session_state.use_serp_api = False
+        st.session_state.use_plain_duckduckgo = False
 
 
 #! End of Toggle Logic
@@ -750,6 +758,9 @@ def sidebar_and_init() -> tuple:
     if "use_agentic_search" not in st.session_state:
         st.session_state.use_agentic_search = False
 
+    if "use_compound_beta" not in st.session_state:
+        st.session_state.use_compound_beta = False
+
     st.session_state.page_reload_count += (
         1  # will be incremented each time streamlit reruns the script
     )
@@ -817,10 +828,7 @@ def sidebar_and_init() -> tuple:
                 "Select Model",
                 [
                     "gemma2-9b-it",
-                    "gemma-7b-it",
-                    "mixtral-8x7b-32768",
-                    "llama-3.2-1b-preview",
-                    "llama-3.2-3b-preview",
+                    "mistral-saba-24b",
                     "llama-3.1-8b-instant",
                     "llama3-8b-8192",
                 ],
@@ -841,29 +849,37 @@ def sidebar_and_init() -> tuple:
             model = st.selectbox(
                 "Select Model",
                 [
-                    "llama-3.2-11b-vision-preview",
-                    "llama-3.2-90b-vision-preview",
+                    "meta-llama/llama-4-maverick-17b-128e-instruct",
+                    "meta-llama/llama-4-scout-17b-16e-instruct",
                 ],
                 index=1,
+            )
+        elif st.session_state.use_compound_beta:
+            model = st.selectbox(
+                "Select Model",
+                [
+                    "compound-beta",
+                    "compound-beta-mini",
+                    "compound-beta-kimi",
+                ],
+                index=0,
             )
         else:
             model = st.selectbox(
                 "Select Model",
                 [
                     "gemma2-9b-it",
-                    "mixtral-8x7b-32768",
-                    "llama-3.3-70b-specdec",
-                    "llama-3.3-70b-versatile",
-                    "llama-3.2-1b-preview",
-                    "llama-3.2-3b-preview",
-                    "llama-3.2-11b-vision-preview",
-                    "llama-3.2-90b-vision-preview",
-                    "llama-3.1-8b-instant",
-                    "llama3-8b-8192",
+                    "mistral-saba-24b",
                     "llama3-70b-8192",
+                    "llama3-8b-8192",
+                    "llama-3.1-8b-instant",
+                    "meta-llama/llama-4-maverick-17b-128e-instruct",
+                    "meta-llama/llama-4-scout-17b-16e-instruct",
                     "deepseek-r1-distill-llama-70b",
+                    "qwen/qwen3-32b",
+                    "moonshotai/kimi-k2-instruct",
                 ],
-                index=11,
+                index=5,
             )
 
         if "gemma" in model:
@@ -907,8 +923,25 @@ def sidebar_and_init() -> tuple:
             max_tokens = st.slider(
                 "Max Tokens", 0, 32768, 1024, help="Max tokens in the response"
             )
+        if model == "moonshotai/kimi-k2-instruct" and st.session_state.use_audio_input:
+            max_tokens = 16384  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
+            st.success(f"{max_tokens=}")
+        elif (
+            model == "moonshotai/kimi-k2-instruct"
+            and not st.session_state.use_audio_input
+        ):
+            max_tokens = st.slider(
+                "Max Tokens", 0, 16384, 4096, help="Max tokens in the response"
+            )
+        if model == "qwen/qwen3-32b" and st.session_state.use_audio_input:
+            max_tokens = 40960  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
+            st.success(f"{max_tokens=}")
+        elif model == "qwen/qwen3-32b" and not st.session_state.use_audio_input:
+            max_tokens = st.slider(
+                "Max Tokens", 0, 40960, 4096, help="Max tokens in the response"
+            )
         if (
-            model == "deepseek-r1-distill-llama-70b"
+            model in ("deepseek-r1-distill-llama-70b",)
             and st.session_state.use_audio_input
         ):
             max_tokens = 131072  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
@@ -929,31 +962,22 @@ def sidebar_and_init() -> tuple:
             max_tokens = st.slider(
                 "Max Tokens", 0, 32768, 8192, help="Max tokens in the response"
             )
-        elif (
-            model in ("llama-3.1-8b-instant", "llama-3.1-70b-versatile")
-            and not st.session_state.use_audio_input
-        ):
+        elif model == "llama-3.1-8b-instant" and not st.session_state.use_audio_input:
             max_tokens = st.slider(
                 "Max Tokens", 0, 8000, 1024, help="Max tokens in the response"
             )
-        elif (
-            model in ("llama-3.1-8b-instant", "llama-3.1-70b-versatile")
-            and st.session_state.use_audio_input
-        ):
+        elif model == "llama-3.1-8b-instant" and st.session_state.use_audio_input:
             max_tokens = 8000
             st.success(f"{max_tokens=}")
         elif (
             model
             in (
-                "llama-3.2-1b-preview",
-                "llama-3.2-3b-preview",
                 "llama3-70b-8192",
                 "llama3-8b-8192",
                 "gemma2-9b-it",
-                "gemma-7b-it",
-                "llama-3.2-11b-vision-preview",
-                "llama-3.2-90b-vision-preview",
-                "llama-3.3-70b-specdec",
+                "compound-beta",
+                "compound-beta-kimi",
+                "compound-beta-mini",
             )
             and st.session_state.use_audio_input
         ):
@@ -962,15 +986,12 @@ def sidebar_and_init() -> tuple:
         elif (
             model
             in (
-                "llama-3.2-1b-preview",
-                "llama-3.2-3b-preview",
                 "llama3-70b-8192",
                 "llama3-8b-8192",
                 "gemma2-9b-it",
-                "gemma-7b-it",
-                "llama-3.2-11b-vision-preview",
-                "llama-3.2-90b-vision-preview",
-                "llama-3.3-70b-specdec",
+                "compound-beta",
+                "compound-beta-kimi",
+                "compound-beta-mini",
             )
             and not st.session_state.use_audio_input
         ):
@@ -1138,7 +1159,7 @@ def sidebar_and_init() -> tuple:
                 help="Select the region to get the search results from.",
             )
 
-            if not st.session_state.use_agentic_search:
+            if not st.session_state.use_agentic_search and not st.session_state.use_compound_beta:
                 max_results = st.slider(
                     "Max search results to refer",
                     10,
@@ -1148,11 +1169,19 @@ def sidebar_and_init() -> tuple:
                 )
 
             st.toggle(
+                "Compound Beta",
+                st.session_state.use_compound_beta,
+                on_change=handle_search_toggle,
+                args=("use_compound_beta",),
+                help="Groq's in house search tool to get quick answers.",
+            )
+
+            st.toggle(
                 "DuckDuckGo",
                 st.session_state.use_plain_duckduckgo,
                 on_change=handle_search_toggle,
                 args=("use_plain_duckduckgo",),
-                help="Fast and reliable search tool to get quick answers.",
+                help="Custom made search tool to get quick answers.",
             )
 
             st.toggle(
@@ -1176,7 +1205,7 @@ def sidebar_and_init() -> tuple:
                 - **Agentic Search** is an experimental feature and has a long wait time\n
                 - Ideal for GROQ paid plans\n
                 - **Rate Limit will be more likely to be hit for free plans**\n
-                - We highly recommend **llama-3.3-70b-versatile** for **Agentic Search**\n
+                - We highly recommend **deepseek-r1-distill-llama-70b** for **Agentic Search**\n
                 """
 
             # ? SerpApi Integration
