@@ -916,7 +916,9 @@ def sidebar_and_init() -> tuple:
                 width=125,
             )
         elif model in ("compound-beta", "compound-beta-mini", "compound-beta-kimi"):
-            st.markdown("[**Model by**](https://console.groq.com/docs/agentic-tooling/compound-beta)")
+            st.markdown(
+                "[**Model by**](https://console.groq.com/docs/agentic-tooling/compound-beta)"
+            )
             st.image(
                 "https://upload.wikimedia.org/wikipedia/commons/c/cc/Groq_logo.svg",
                 width=125,
@@ -928,7 +930,9 @@ def sidebar_and_init() -> tuple:
                 width=200,
             )
         elif model in ("qwen/qwen3-32b",):
-            st.markdown("[**Model by**](https://www.alibabacloud.com/help/en/model-studio/what-is-qwen-llm)")
+            st.markdown(
+                "[**Model by**](https://www.alibabacloud.com/help/en/model-studio/what-is-qwen-llm)"
+            )
             st.image(
                 "./utils/static/alibaba-cloud-logo.webp",
                 width=150,
@@ -947,88 +951,69 @@ def sidebar_and_init() -> tuple:
             temperature = 1.0  #! Hardcoded to 1.0 for audio input to refrain from sending multiple requests to the API
             st.success(f"{temperature=}")
 
-        if model == "mixtral-8x7b-32768" and st.session_state.use_audio_input:
-            max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
-            st.success(f"{max_tokens=}")
-        elif model == "mixtral-8x7b-32768" and not st.session_state.use_audio_input:
-            max_tokens = st.slider(
-                "Max Tokens", 0, 32768, 1024, help="Max tokens in the response"
-            )
-        if model == "moonshotai/kimi-k2-instruct" and st.session_state.use_audio_input:
-            max_tokens = 16384  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
-            st.success(f"{max_tokens=}")
-        elif (
-            model == "moonshotai/kimi-k2-instruct"
-            and not st.session_state.use_audio_input
+        if model == "mixtral-8x7b-32768":
+            if st.session_state.use_audio_input:
+                max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 32768, 1024, help="Max tokens in the response"
+                )
+        if model == "moonshotai/kimi-k2-instruct":
+            if st.session_state.use_audio_input:
+                max_tokens = 16384  #! Hardcoded to 16384 for audio input to refrain from sending multiple requests to the API
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 16384, 4096, help="Max tokens in the response"
+                )
+        if model == "qwen/qwen3-32b":
+            if st.session_state.use_audio_input:
+                max_tokens = 40960  #! Hardcoded to 40960 for audio input to refrain from sending multiple requests to the API
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 40960, 4096, help="Max tokens in the response"
+                )
+        if model in ("deepseek-r1-distill-llama-70b"):
+            if st.session_state.use_audio_input:
+                max_tokens = 131072  #! Hardcoded to 131072 for audio input to refrain from sending multiple requests to the API
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 131072, 32768, help="Max tokens in the response"
+                )
+        elif model == "llama-3.3-70b-versatile":
+            if st.session_state.use_audio_input:
+                max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 32768, 8192, help="Max tokens in the response"
+                )
+        elif model == "llama-3.1-8b-instant":
+            if st.session_state.use_audio_input:
+                max_tokens = 8000
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 8000, 1024, help="Max tokens in the response"
+                )
+        elif model in (
+            "llama3-70b-8192",
+            "llama3-8b-8192",
+            "gemma2-9b-it",
+            "compound-beta",
+            "compound-beta-kimi",
+            "compound-beta-mini",
         ):
-            max_tokens = st.slider(
-                "Max Tokens", 0, 16384, 4096, help="Max tokens in the response"
-            )
-        if model == "qwen/qwen3-32b" and st.session_state.use_audio_input:
-            max_tokens = 40960  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
-            st.success(f"{max_tokens=}")
-        elif model == "qwen/qwen3-32b" and not st.session_state.use_audio_input:
-            max_tokens = st.slider(
-                "Max Tokens", 0, 40960, 4096, help="Max tokens in the response"
-            )
-        if (
-            model in ("deepseek-r1-distill-llama-70b",)
-            and st.session_state.use_audio_input
-        ):
-            max_tokens = 131072  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
-            st.success(f"{max_tokens=}")
-        elif (
-            model == "deepseek-r1-distill-llama-70b"
-            and not st.session_state.use_audio_input
-        ):
-            max_tokens = st.slider(
-                "Max Tokens", 0, 131072, 32768, help="Max tokens in the response"
-            )
-        elif model == "llama-3.3-70b-versatile" and st.session_state.use_audio_input:
-            max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
-            st.success(f"{max_tokens=}")
-        elif (
-            model == "llama-3.3-70b-versatile" and not st.session_state.use_audio_input
-        ):
-            max_tokens = st.slider(
-                "Max Tokens", 0, 32768, 8192, help="Max tokens in the response"
-            )
-        elif model == "llama-3.1-8b-instant" and not st.session_state.use_audio_input:
-            max_tokens = st.slider(
-                "Max Tokens", 0, 8000, 1024, help="Max tokens in the response"
-            )
-        elif model == "llama-3.1-8b-instant" and st.session_state.use_audio_input:
-            max_tokens = 8000
-            st.success(f"{max_tokens=}")
-        elif (
-            model
-            in (
-                "llama3-70b-8192",
-                "llama3-8b-8192",
-                "gemma2-9b-it",
-                "compound-beta",
-                "compound-beta-kimi",
-                "compound-beta-mini",
-            )
-            and st.session_state.use_audio_input
-        ):
-            max_tokens = 8192
-            st.success(f"{max_tokens=}")
-        elif (
-            model
-            in (
-                "llama3-70b-8192",
-                "llama3-8b-8192",
-                "gemma2-9b-it",
-                "compound-beta",
-                "compound-beta-kimi",
-                "compound-beta-mini",
-            )
-            and not st.session_state.use_audio_input
-        ):
-            max_tokens = st.slider(
-                "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
-            )
+            if st.session_state.use_audio_input:
+                max_tokens = 8192
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
+                )
         else:
             max_tokens = st.slider(
                 "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
