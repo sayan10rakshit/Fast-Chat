@@ -1018,7 +1018,6 @@ def sidebar_and_init() -> tuple:
             max_tokens = st.slider(
                 "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
             )
-            print("This line is executed for the model: ", model)
 
         if not st.session_state.use_audio_input and not st.session_state.search_the_web:
             top_p = st.slider(
