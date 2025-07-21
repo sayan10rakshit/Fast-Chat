@@ -882,25 +882,56 @@ def sidebar_and_init() -> tuple:
                 index=5,
             )
 
-        if "gemma" in model:
+        if model in ("gemma2-9b-it",):
             st.markdown("[**Model by**](https://ai.google.dev/gemma)")
             st.image(
                 "https://www.gstatic.com/images/branding/googlelogo/svg/googlelogo_clr_74x24px.svg",
                 width=125,
             )
 
-        elif "llama" in model:
+        elif model in ("deepseek-r1-distill-llama-70b",):
+            st.markdown("[**Model by**](https://www.deepseek.com/)")
+            st.image(
+                "https://upload.wikimedia.org/wikipedia/commons/e/ec/DeepSeek_logo.svg",
+                width=125,
+            )
+
+        elif model in (
+            "llama3-70b-8192",
+            "llama3-8b-8192",
+            "llama-3.1-8b-instant",
+            "meta-llama/llama-4-maverick-17b-128e-instruct",
+            "meta-llama/llama-4-scout-17b-16e-instruct",
+        ):
             st.markdown("[**Model by**](https://www.llama.com/)")
             st.image(
                 "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/320px-Meta_Platforms_Inc._logo.svg.png",
                 width=125,
             )
 
-        elif "mixtral" in model:
+        elif model in ("mistral-saba-24b",):
             st.markdown("[**Model by**](https://mistral.ai/news/mixtral-of-experts/)")
             st.image(
-                "https://upload.wikimedia.org/wikipedia/de/thumb/b/b7/Mistral_AI_Logo.png/320px-Mistral_AI_Logo.png",
+                "https://upload.wikimedia.org/wikipedia/commons/e/e6/Mistral_AI_logo_%282025%E2%80%93%29.svg",
                 width=125,
+            )
+        elif model in ("compound-beta", "compound-beta-mini", "compound-beta-kimi"):
+            st.markdown("[**Model by**](https://console.groq.com/docs/agentic-tooling/compound-beta)")
+            st.image(
+                "https://upload.wikimedia.org/wikipedia/commons/c/cc/Groq_logo.svg",
+                width=125,
+            )
+        elif model in ("moonshotai/kimi-k2-instruct",):
+            st.markdown("[**Model by**](https://www.moonshot-ai.com/)")
+            st.image(
+                "./utils/static/moonshotai.jpeg",
+                width=200,
+            )
+        elif model in ("qwen/qwen3-32b",):
+            st.markdown("[**Model by**](https://www.alibabacloud.com/help/en/model-studio/what-is-qwen-llm)")
+            st.image(
+                "./utils/static/alibaba-cloud-logo.webp",
+                width=150,
             )
 
         if not st.session_state.use_audio_input and not st.session_state.search_the_web:
@@ -1159,7 +1190,10 @@ def sidebar_and_init() -> tuple:
                 help="Select the region to get the search results from.",
             )
 
-            if not st.session_state.use_agentic_search and not st.session_state.use_compound_beta:
+            if (
+                not st.session_state.use_agentic_search
+                and not st.session_state.use_compound_beta
+            ):
                 max_results = st.slider(
                     "Max search results to refer",
                     10,
@@ -1354,10 +1388,9 @@ def sidebar_and_init() -> tuple:
             #! Logic to clear the chat history, remove any audio files generated, reinitialize the toggles and reload the page
             st.session_state.clear_chat_tracker.append(False)
 
-        st.markdown("**:gray[Powered by]**")
-        st.image(
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Groq_logo.svg/152px-Groq_logo.svg.png",
-            width=50,
+        st.markdown(
+            '<a href="https://groq.com" target="_blank" rel="noopener noreferrer"><img src="https://console.groq.com/powered-by-groq.svg" alt="Powered by Groq for fast inference." width="120"/></a>',
+            unsafe_allow_html=True,
         )
 
     # ? Show if model is llama3-70b-8192 and max_results is greater than 20
