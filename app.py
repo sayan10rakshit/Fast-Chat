@@ -959,7 +959,7 @@ def sidebar_and_init() -> tuple:
                 max_tokens = st.slider(
                     "Max Tokens", 0, 32768, 1024, help="Max tokens in the response"
                 )
-        if model == "moonshotai/kimi-k2-instruct":
+        elif model == "moonshotai/kimi-k2-instruct":
             if st.session_state.use_audio_input:
                 max_tokens = 16384  #! Hardcoded to 16384 for audio input to refrain from sending multiple requests to the API
                 st.success(f"{max_tokens=}")
@@ -967,7 +967,7 @@ def sidebar_and_init() -> tuple:
                 max_tokens = st.slider(
                     "Max Tokens", 0, 16384, 4096, help="Max tokens in the response"
                 )
-        if model == "qwen/qwen3-32b":
+        elif model == "qwen/qwen3-32b":
             if st.session_state.use_audio_input:
                 max_tokens = 40960  #! Hardcoded to 40960 for audio input to refrain from sending multiple requests to the API
                 st.success(f"{max_tokens=}")
@@ -975,7 +975,7 @@ def sidebar_and_init() -> tuple:
                 max_tokens = st.slider(
                     "Max Tokens", 0, 40960, 4096, help="Max tokens in the response"
                 )
-        if model in ("deepseek-r1-distill-llama-70b"):
+        elif model in ("deepseek-r1-distill-llama-70b"):
             if st.session_state.use_audio_input:
                 max_tokens = 131072  #! Hardcoded to 131072 for audio input to refrain from sending multiple requests to the API
                 st.success(f"{max_tokens=}")
@@ -1018,6 +1018,7 @@ def sidebar_and_init() -> tuple:
             max_tokens = st.slider(
                 "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
             )
+            print("This line is executed for the model: ", model)
 
         if not st.session_state.use_audio_input and not st.session_state.search_the_web:
             top_p = st.slider(
