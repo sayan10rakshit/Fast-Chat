@@ -148,27 +148,27 @@ def handle_toggle(toggle_name: str) -> None:
         st.session_state.use_audio_input = False
         st.session_state.use_audio_output = False
         st.session_state.show_file_uploader = False
-        st.session_state.img_gen = False
+        # st.session_state.img_gen = False
     elif toggle_name == "search_the_web":
         st.session_state.use_you_tube = False
         st.session_state.show_file_uploader = False
-        st.session_state.img_gen = False
+        # st.session_state.img_gen = False
     elif toggle_name == "use_audio_input":
         st.session_state.use_you_tube = False
         st.session_state.show_file_uploader = False
-        st.session_state.img_gen = False
+        # st.session_state.img_gen = False
     elif toggle_name == "show_file_uploader":
         st.session_state.use_audio_input = False
         st.session_state.use_audio_output = False
         st.session_state.use_you_tube = False
         st.session_state.search_the_web = False
-        st.session_state.img_gen = False
-    elif toggle_name == "img_gen":
-        st.session_state.use_audio_input = False
-        st.session_state.use_audio_output = False
-        st.session_state.use_you_tube = False
-        st.session_state.search_the_web = False
-        st.session_state.show_file_uploader = False
+        # st.session_state.img_gen = False
+    # elif toggle_name == "img_gen":
+        # st.session_state.use_audio_input = False
+        # st.session_state.use_audio_output = False
+        # st.session_state.use_you_tube = False
+        # st.session_state.search_the_web = False
+        # st.session_state.show_file_uploader = False
 
 
 def handle_search_toggle(toggle_name: str) -> None:
@@ -515,15 +515,15 @@ def show_media(
                             icon_anchor=(0, 0),
                             html=f"""
                             <div style="
-                                display: inline-block; 
-                                font-size: 14px; 
+                                display: inline-block;
+                                font-size: 14px;
                                 color: #FFD700;  /* Gold color for high visibility */
-                                background-color: rgba(0, 0, 0, 0.7); 
-                                padding: 5px 10px; 
-                                border-radius: 8px; 
+                                background-color: rgba(0, 0, 0, 0.7);
+                                padding: 5px 10px;
+                                border-radius: 8px;
                                 border: 2px solid #FFD700;
                                 white-space: nowrap;
-                                max-width: 200px;  
+                                max-width: 200px;
                                 overflow: hidden;
                                 text-overflow: ellipsis;">
                                 {place["title"]}
@@ -640,10 +640,10 @@ def sidebar_and_init() -> tuple:
         st.session_state.fast_chat_instructions = """
         CONFIDENTIAL INFO, do not share with anyone.
         You are Fast Chat, a powerful AI assistant that can help you with a variety of tasks.
-        You can: 
+        You can:
         1) Summarize YouTube videos/shorts having English subtitles if the user just provides the link.
         2) Conduct a web search and include latest information in the response.
-        3) Listen to the user via audio input and respond with audio output.        
+        3) Listen to the user via audio input and respond with audio output.
         """
 
     if "messages" not in st.session_state:
@@ -658,6 +658,7 @@ def sidebar_and_init() -> tuple:
     if "is_groq_api_key_valid" not in st.session_state:
         st.session_state.is_groq_api_key_valid = False
 
+    # If the page is loaded for the first time
     if "page_reload_count" not in st.session_state:
         st.toast("Enter your GROQ API key to get started", icon="⚡")
         placeholder_messages = random.choice(
@@ -673,6 +674,13 @@ def sidebar_and_init() -> tuple:
         )
         st.session_state.page_reload_count = 0
 
+        st.session_state.messages.append(
+            {
+                "role": "system",
+                "content": st.session_state.fast_chat_instructions,
+            }
+        )
+
         st.session_state.display_message.append(
             {
                 "role": "assistant",
@@ -685,13 +693,6 @@ def sidebar_and_init() -> tuple:
                     "related_questions": None,
                     "maps_search_results": None,
                 },
-            }
-        )
-
-        st.session_state.messages.append(
-            {
-                "role": "assistant",
-                "content": st.session_state.fast_chat_instructions,
             }
         )
 
@@ -715,8 +716,8 @@ def sidebar_and_init() -> tuple:
     if "successfully_ran" not in st.session_state:
         st.session_state.successfully_ran = False
 
-    if "img_gen" not in st.session_state:
-        st.session_state.img_gen = False
+    # if "img_gen" not in st.session_state:
+    #     st.session_state.img_gen = False
 
     #! Logic to clear the chat history, remove any audio files generated, reinitialize the toggles and reload the page
     if "clear_chat_tracker" not in st.session_state:
@@ -793,16 +794,17 @@ def sidebar_and_init() -> tuple:
 
     #! Iterate over the messages and display them
     for message in st.session_state.display_message:
-        show_media(
-            role=message["role"],
-            model_output=message["content"],
-            img_links=message["media"]["img_links"],
-            video_links=message["media"]["video_links"],
-            MARKDOWN_PLACEHOLDER=message["media"]["MARKDOWN_PLACEHOLDER"],
-            audio_file_path=message["media"]["audio_file_path"],
-            related_questions=message["media"]["related_questions"],
-            maps_search_results=message["media"]["maps_search_results"],
-        )
+        if message["role"] != "system":
+            show_media(
+                role=message["role"],
+                model_output=message["content"],
+                img_links=message["media"]["img_links"],
+                video_links=message["media"]["video_links"],
+                MARKDOWN_PLACEHOLDER=message["media"]["MARKDOWN_PLACEHOLDER"],
+                audio_file_path=message["media"]["audio_file_path"],
+                related_questions=message["media"]["related_questions"],
+                maps_search_results=message["media"]["maps_search_results"],
+            )
 
     with st.sidebar:
         #! Only show the input field if the API key is not valid or if some error has occurred
@@ -830,7 +832,7 @@ def sidebar_and_init() -> tuple:
                     "gemma2-9b-it",
                     "mistral-saba-24b",
                     "llama-3.1-8b-instant",
-                    "llama3-8b-8192",
+                    "meta-llama/llama-4-scout-17b-16e-instruct"
                 ],
                 index=3,
             )
@@ -870,9 +872,8 @@ def sidebar_and_init() -> tuple:
                 [
                     "gemma2-9b-it",
                     "mistral-saba-24b",
-                    "llama3-70b-8192",
-                    "llama3-8b-8192",
                     "llama-3.1-8b-instant",
+                    "llama-3.3-70b-versatile",
                     "meta-llama/llama-4-maverick-17b-128e-instruct",
                     "meta-llama/llama-4-scout-17b-16e-instruct",
                     "deepseek-r1-distill-llama-70b",
@@ -897,8 +898,6 @@ def sidebar_and_init() -> tuple:
             )
 
         elif model in (
-            "llama3-70b-8192",
-            "llama3-8b-8192",
             "llama-3.1-8b-instant",
             "meta-llama/llama-4-maverick-17b-128e-instruct",
             "meta-llama/llama-4-scout-17b-16e-instruct",
@@ -1000,8 +999,6 @@ def sidebar_and_init() -> tuple:
                     "Max Tokens", 0, 8000, 1024, help="Max tokens in the response"
                 )
         elif model in (
-            "llama3-70b-8192",
-            "llama3-8b-8192",
             "gemma2-9b-it",
             "compound-beta",
             "compound-beta-kimi",
@@ -1101,7 +1098,7 @@ def sidebar_and_init() -> tuple:
                     st.session_state.elevenlabs_api_key = elevenlabs_api_key
                 st.markdown(
                     "[Get your FREE API key!](https://elevenlabs.io/app/voice-lab)",
-                    help="""Go to My Workspace at the bottom of the left sidebar and 
+                    help="""Go to My Workspace at the bottom of the left sidebar and
                     click on the Profile + API Key to get your FREE API key.
                     Since generating audio output is computationally expensive,
                     this app uses an API to generate audio output.
@@ -1263,8 +1260,8 @@ def sidebar_and_init() -> tuple:
 
             if max_results is not None:
                 if max_results >= 20 and model in (
-                    "llama3-70b-8192",
-                    "llama-3.1-70b-versatile",
+                    "meta-llama/llama-4-maverick-17b-128e-instruct",
+                    "deepseek-r1-distill-llama-70b",
                 ):
                     st.session_state.special_message = f"""
                     Although {model} is a powerful model, you might get slow responses.\n
@@ -1303,45 +1300,45 @@ def sidebar_and_init() -> tuple:
                 args=("show_file_uploader",),
             )
 
-        #! Logic to clear the chat history, remove any audio files generated, reinitialize the toggles and reload the page
-        if len(st.session_state.clear_chat_tracker) > 0:
-            if st.session_state.clear_chat_tracker[-1]:
-                st.session_state.img_gen = False  # ? Un-toggle the image generation
+        # #! Logic to clear the chat history, remove any audio files generated, reinitialize the toggles and reload the page
+        # if len(st.session_state.clear_chat_tracker) > 0:
+        #     if st.session_state.clear_chat_tracker[-1]:
+        #         st.session_state.img_gen = False  # ? Un-toggle the image generation
 
-        with checkbox_cols[1]:
-            st.checkbox(
-                "Generate Image",
-                st.session_state.img_gen,
-                key="img_gen",
-                on_change=handle_toggle,
-                args=("img_gen",),
-            )
+        # with checkbox_cols[1]:
+        #     st.checkbox(
+        #         "Generate Image",
+        #         st.session_state.img_gen,
+        #         key="img_gen",
+        #         on_change=handle_toggle,
+        #         args=("img_gen",),
+        #     )
 
-        if st.session_state.img_gen:
-            if (
-                st.session_state.prodia_api_key == ""
-                or not st.session_state.is_prodia_api_key_valid
-            ):
-                prodia_api_key = st.text_input(
-                    "Enter Prodia API Key",
-                    type="password",
-                    help="Enter your Prodia API key to generate images.",
-                )
+        # if st.session_state.img_gen:
+        #     if (
+        #         st.session_state.prodia_api_key == ""
+        #         or not st.session_state.is_prodia_api_key_valid
+        #     ):
+        #         prodia_api_key = st.text_input(
+        #             "Enter Prodia API Key",
+        #             type="password",
+        #             help="Enter your Prodia API key to generate images.",
+        #         )
 
-                if prodia_api_key != "":
-                    st.session_state.prodia_api_key = prodia_api_key
-                st.markdown(
-                    "[Get your FREE Prodia API key!](https://app.prodia.com/api)",
-                    help="""A very powerful API to generate images from text.""",
-                )
+        #         if prodia_api_key != "":
+        #             st.session_state.prodia_api_key = prodia_api_key
+        #         st.markdown(
+        #             "[Get your FREE Prodia API key!](https://app.prodia.com/api)",
+        #             help="""A very powerful API to generate images from text.""",
+        #         )
 
         if st.button("Clear Chat"):
-            st.session_state.messages = [
+            st.session_state.messages.append(
                 {
-                    "role": "assistant",
+                    "role": "system",
                     "content": st.session_state.fast_chat_instructions,
                 }
-            ]
+            )
 
             st.session_state.display_message = [
                 {
@@ -1378,7 +1375,7 @@ def sidebar_and_init() -> tuple:
             unsafe_allow_html=True,
         )
 
-    # ? Show if model is llama3-70b-8192 and max_results is greater than 20
+    # ? Show if model a large model is used and max_results is greater than 20
     if st.session_state.special_message and not st.session_state.special_message_shown:
         st.warning(st.session_state.special_message)
         st.session_state.special_message = ""
@@ -1603,113 +1600,113 @@ def body(
                     "Something went wrong with the image processing. Please try again later."
                 )
 
-    #! Implement Prodia API for image generation
-    elif prompt and st.session_state.img_gen and payload:
-        if st.session_state.prodia_api_key:
-            show_media(
-                role="user",
-                model_output=prompt,
-            )
+    # #! Implement Prodia API for image generation
+    # elif prompt and st.session_state.img_gen and payload:
+    #     if st.session_state.prodia_api_key:
+    #         show_media(
+    #             role="user",
+    #             model_output=prompt,
+    #         )
 
-            try:
-                with st.spinner("Generating the image..."):
-                    job_id = generate_image(
-                        payload=payload,
-                        api_key=st.session_state.prodia_api_key,
-                    )
-                    if job_id:
-                        image_url = get_image_url(
-                            job_id, api_key=st.session_state.prodia_api_key
-                        )
-                        if image_url:
-                            st.session_state.is_prodia_api_key_valid = True
-                            img_links = [image_url]
+    #         try:
+    #             with st.spinner("Generating the image..."):
+    #                 job_id = generate_image(
+    #                     payload=payload,
+    #                     api_key=st.session_state.prodia_api_key,
+    #                 )
+    #                 if job_id:
+    #                     image_url = get_image_url(
+    #                         job_id, api_key=st.session_state.prodia_api_key
+    #                     )
+    #                     if image_url:
+    #                         st.session_state.is_prodia_api_key_valid = True
+    #                         img_links = [image_url]
 
-                            model_output = f"""
-                            ### ✅ Image Generation Successful!
-                            
-                            **Positive Prompt**: `{payload["prompt"]}`\n
-                            **Negative Prompt**: `{payload["negative_prompt"]}`
+    #                         model_output = f"""
+    #                         ### ✅ Image Generation Successful!
 
-                            ---
-                            
-                            #### **Generation Settings**:
-                            
-                            - **Image Style**: `{payload["style_preset"]}`
-                            - **Steps**: `{payload["steps"]}`
-                            - **Classifier-Free Guidance Scale (CFG)**: `{payload["cfg_scale"]}`
-                            - **Seed**: `{payload["seed"]}`
-                            - **Sampler**: `{payload["sampler"]}`
-                            - **Width**: `{payload["width"]}`
-                            - **Height**: `{payload["height"]}`
-                            
-                            ---                            
-                            
-                            Visit the link to view the image 👇\n
-                            [{image_url}]({image_url})
-                            """
+    #                         **Positive Prompt**: `{payload["prompt"]}`\n
+    #                         **Negative Prompt**: `{payload["negative_prompt"]}`
 
-                            st.session_state.messages.append(
-                                {
-                                    "role": "user",
-                                    "content": prompt,
-                                }
-                            )
-                            st.session_state.messages.append(
-                                {
-                                    "role": "assistant",
-                                    "content": model_output
-                                    + ". The image is generated successfully and is shown to the user.",
-                                }
-                            )
-                            st.session_state.display_message.append(
-                                {
-                                    "role": "user",
-                                    "content": prompt,
-                                    "media": {
-                                        "audio_file_path": None,
-                                        "img_links": None,
-                                        "video_links": None,
-                                        "MARKDOWN_PLACEHOLDER": None,
-                                        "related_questions": None,
-                                        "maps_search_results": None,
-                                    },
-                                }
-                            )
-                            st.session_state.display_message.append(
-                                {
-                                    "role": "assistant",
-                                    "content": model_output,
-                                    "media": {
-                                        "audio_file_path": None,
-                                        "img_links": img_links,
-                                        "video_links": None,
-                                        "MARKDOWN_PLACEHOLDER": None,
-                                        "related_questions": None,
-                                        "maps_search_results": None,
-                                    },
-                                }
-                            )
-                        else:
-                            st.error("Failed to generate image")
-                            st.session_state.is_prodia_api_key_valid = False
-                    else:
-                        st.error("Failed to start image generation job")
-                        st.session_state.is_prodia_api_key_valid = False
-            except Exception as e:
-                print(e)
-                st.error(
-                    "Something went wrong with the image generation. Please try again later."
-                )
-                st.session_state.is_prodia_api_key_valid = False
+    #                         ---
 
-        else:
-            st.warning("Please enter your Prodia API key.")
+    #                         #### **Generation Settings**:
+
+    #                         - **Image Style**: `{payload["style_preset"]}`
+    #                         - **Steps**: `{payload["steps"]}`
+    #                         - **Classifier-Free Guidance Scale (CFG)**: `{payload["cfg_scale"]}`
+    #                         - **Seed**: `{payload["seed"]}`
+    #                         - **Sampler**: `{payload["sampler"]}`
+    #                         - **Width**: `{payload["width"]}`
+    #                         - **Height**: `{payload["height"]}`
+
+    #                         ---
+
+    #                         Visit the link to view the image 👇\n
+    #                         [{image_url}]({image_url})
+    #                         """
+
+    #                         st.session_state.messages.append(
+    #                             {
+    #                                 "role": "user",
+    #                                 "content": prompt,
+    #                             }
+    #                         )
+    #                         st.session_state.messages.append(
+    #                             {
+    #                                 "role": "assistant",
+    #                                 "content": model_output
+    #                                 + ". The image is generated successfully and is shown to the user.",
+    #                             }
+    #                         )
+    #                         st.session_state.display_message.append(
+    #                             {
+    #                                 "role": "user",
+    #                                 "content": prompt,
+    #                                 "media": {
+    #                                     "audio_file_path": None,
+    #                                     "img_links": None,
+    #                                     "video_links": None,
+    #                                     "MARKDOWN_PLACEHOLDER": None,
+    #                                     "related_questions": None,
+    #                                     "maps_search_results": None,
+    #                                 },
+    #                             }
+    #                         )
+    #                         st.session_state.display_message.append(
+    #                             {
+    #                                 "role": "assistant",
+    #                                 "content": model_output,
+    #                                 "media": {
+    #                                     "audio_file_path": None,
+    #                                     "img_links": img_links,
+    #                                     "video_links": None,
+    #                                     "MARKDOWN_PLACEHOLDER": None,
+    #                                     "related_questions": None,
+    #                                     "maps_search_results": None,
+    #                                 },
+    #                             }
+    #                         )
+    #                     else:
+    #                         st.error("Failed to generate image")
+    #                         st.session_state.is_prodia_api_key_valid = False
+    #                 else:
+    #                     st.error("Failed to start image generation job")
+    #                     st.session_state.is_prodia_api_key_valid = False
+    #         except Exception as e:
+    #             print(e)
+    #             st.error(
+    #                 "Something went wrong with the image generation. Please try again later."
+    #             )
+    #             st.session_state.is_prodia_api_key_valid = False
+
+    #     else:
+    #         st.warning("Please enter your Prodia API key.")
 
     elif (
         prompt
         and not st.session_state.show_file_uploader
-        and not st.session_state.img_gen
+        # and not st.session_state.img_gen
     ):
         # Add user message to chat history
         if (
@@ -2134,7 +2131,6 @@ if __name__ == "__main__":
                                 [
                                     "whisper-large-v3",
                                     "whisper-large-v3-turbo",
-                                    "distil-whisper-large-v3-en",
                                 ]
                             ),
                         )
@@ -2194,94 +2190,94 @@ if __name__ == "__main__":
             )
             current_prompt = st.chat_input("Ask me anything!")
 
-    elif st.session_state.img_gen:
+    # elif st.session_state.img_gen:
 
-        with st.form(key="user_input_form"):
-            prompt = st.text_input(
-                "Enter your message or image prompt:",
-                value="A panda in a bamboo forest eating bamboo sticks",
-            )
-            negative_prompt = st.text_input(
-                "Enter a negative prompt (optional):", value="ugly, dark"
-            )
+    #     with st.form(key="user_input_form"):
+    #         prompt = st.text_input(
+    #             "Enter your message or image prompt:",
+    #             value="A panda in a bamboo forest eating bamboo sticks",
+    #         )
+    #         negative_prompt = st.text_input(
+    #             "Enter a negative prompt (optional):", value="ugly, dark"
+    #         )
 
-            model_name_sampler_style_cols = st.columns([1, 1, 1])
-            with model_name_sampler_style_cols[0]:
-                model_name = st.selectbox(
-                    "Choose a model:",
-                    [
-                        "sd_xl_base_1.0.safetensors [be9edd61]",
-                        "dynavisionXL_0411.safetensors [c39cc051]",
-                        "dreamshaperXL10_alpha2.safetensors [c8afe2ef]",
-                    ],
-                    index=0,
-                )
-            with model_name_sampler_style_cols[1]:
-                sampler = st.selectbox(
-                    "Choose a sampler:",
-                    [
-                        "DPM++ 2M Karras",
-                        "DPM++ SDE Karras",
-                        "Euler",
-                        "Euler a",
-                        "Heun",
-                    ],
-                    index=1,
-                )
+    #         model_name_sampler_style_cols = st.columns([1, 1, 1])
+    #         with model_name_sampler_style_cols[0]:
+    #             model_name = st.selectbox(
+    #                 "Choose a model:",
+    #                 [
+    #                     "sd_xl_base_1.0.safetensors [be9edd61]",
+    #                     "dynavisionXL_0411.safetensors [c39cc051]",
+    #                     "dreamshaperXL10_alpha2.safetensors [c8afe2ef]",
+    #                 ],
+    #                 index=0,
+    #             )
+    #         with model_name_sampler_style_cols[1]:
+    #             sampler = st.selectbox(
+    #                 "Choose a sampler:",
+    #                 [
+    #                     "DPM++ 2M Karras",
+    #                     "DPM++ SDE Karras",
+    #                     "Euler",
+    #                     "Euler a",
+    #                     "Heun",
+    #                 ],
+    #                 index=1,
+    #             )
 
-            with model_name_sampler_style_cols[2]:
-                style_preset = st.selectbox(
-                    "Choose a style preset:",
-                    [
-                        "3d-model",
-                        "analog-film",
-                        "anime",
-                        "cinematic",
-                        "comic-book",
-                        "digital-art",
-                        "enhance",
-                        "fantasy-art",
-                        "isometric",
-                        "line-art",
-                        "low-poly",
-                        "neon-punk",
-                        "origami",
-                        "photographic",
-                        "pixel-art",
-                        "tile-texture",
-                    ],
-                    index=2,
-                )
+    #         with model_name_sampler_style_cols[2]:
+    #             style_preset = st.selectbox(
+    #                 "Choose a style preset:",
+    #                 [
+    #                     "3d-model",
+    #                     "analog-film",
+    #                     "anime",
+    #                     "cinematic",
+    #                     "comic-book",
+    #                     "digital-art",
+    #                     "enhance",
+    #                     "fantasy-art",
+    #                     "isometric",
+    #                     "line-art",
+    #                     "low-poly",
+    #                     "neon-punk",
+    #                     "origami",
+    #                     "photographic",
+    #                     "pixel-art",
+    #                     "tile-texture",
+    #                 ],
+    #                 index=2,
+    #             )
 
-            steps_cfg_scale_seed_cols = st.columns([1, 1, 1])
-            with steps_cfg_scale_seed_cols[0]:
-                steps = st.slider("Number of steps:", 20, 50, 20)
-            with steps_cfg_scale_seed_cols[1]:
-                cfg_scale = st.slider("Classifier-Free Guidance Scale", 5, 15, 7)
-            with steps_cfg_scale_seed_cols[2]:
-                seed = st.number_input(
-                    "Seed", value=-1, step=1, min_value=-1, max_value=1000
-                )
+    #         steps_cfg_scale_seed_cols = st.columns([1, 1, 1])
+    #         with steps_cfg_scale_seed_cols[0]:
+    #             steps = st.slider("Number of steps:", 20, 50, 20)
+    #         with steps_cfg_scale_seed_cols[1]:
+    #             cfg_scale = st.slider("Classifier-Free Guidance Scale", 5, 15, 7)
+    #         with steps_cfg_scale_seed_cols[2]:
+    #             seed = st.number_input(
+    #                 "Seed", value=-1, step=1, min_value=-1, max_value=1000
+    #             )
 
-            submit_button = st.form_submit_button("Send")
+    #         submit_button = st.form_submit_button("Send")
 
-        if submit_button:
-            if prompt:
-                current_prompt = prompt
-                payload = {
-                    "model": model_name,
-                    "prompt": prompt,
-                    "negative_prompt": negative_prompt,
-                    "style_preset": style_preset,
-                    "steps": steps,
-                    "cfg_scale": cfg_scale,
-                    "seed": seed,
-                    "sampler": sampler,
-                    "width": 1024,
-                    "height": 1024,
-                }
-            else:
-                st.warning("Please enter a prompt to generate the image.")
+    #     if submit_button:
+    #         if prompt:
+    #             current_prompt = prompt
+    #             payload = {
+    #                 "model": model_name,
+    #                 "prompt": prompt,
+    #                 "negative_prompt": negative_prompt,
+    #                 "style_preset": style_preset,
+    #                 "steps": steps,
+    #                 "cfg_scale": cfg_scale,
+    #                 "seed": seed,
+    #                 "sampler": sampler,
+    #                 "width": 1024,
+    #                 "height": 1024,
+    #             }
+    #         else:
+    #             st.warning("Please enter a prompt to generate the image.")
 
     else:  # Old good text input when audio input is failing
         current_prompt = st.chat_input("Ask me anything!")

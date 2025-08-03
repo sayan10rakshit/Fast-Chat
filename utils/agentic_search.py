@@ -285,8 +285,7 @@ def search_summary(
 
         model_list = [
             ("llama-3.1-8b-instant", 8000),
-            ("llama3-70b-8192", 8192),
-            ("llama3-8b-8192", 8192),
+            ("llama-3.3-70b-versatile", 32768),
             ("mistral-saba-24b", 32768),
             ("meta-llama/llama-4-maverick-17b-128e-instruct", 8192),
             ("meta-llama/llama-4-scout-17b-16e-instruct", 8192),
@@ -297,7 +296,7 @@ def search_summary(
 
         #! This is deliberately done to mitigate the rate limit errors faced for each model
         # * We can play around with the weights to see which model works best
-        model, max_tokens = random.choices(model_list, weights=[1, 1, 1, 1, 1, 1, 1, 1, 1], k=1)[0]
+        model, max_tokens = random.choices(model_list, weights=[1, 1, 1, 1, 1, 1, 1, 1], k=1)[0]
         distilled_info += summarize(
             content_from_links=all_info,
             model=model,
@@ -390,8 +389,7 @@ def generate_search_strings(
 
     model_list = [
         ("llama-3.1-8b-instant", 8000),
-        ("llama3-70b-8192", 8192),
-        ("llama3-8b-8192", 8192),
+        ("llama-3.3-70b-versatile", 32768),
         ("mistral-saba-24b", 32768),
         ("meta-llama/llama-4-maverick-17b-128e-instruct", 8192),
         ("meta-llama/llama-4-scout-17b-16e-instruct", 8192),
@@ -401,7 +399,7 @@ def generate_search_strings(
     ]
 
     #! This is deliberately done to mitigate the rate limit errors faced for each model
-    model, max_tokens = random.choices(model_list, weights=[1, 1, 1, 1, 1, 1, 1, 1, 1], k=1)[0]
+    model, max_tokens = random.choices(model_list, weights=[1, 1, 1, 1, 1, 1, 1, 1], k=1)[0]
     print(f"\n\nModel selected for generating search strings: {model}\n\n")
 
     client = Groq(api_key=api_key)
