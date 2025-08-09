@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import random
 import json
@@ -164,11 +165,11 @@ def handle_toggle(toggle_name: str) -> None:
         st.session_state.search_the_web = False
         # st.session_state.img_gen = False
     # elif toggle_name == "img_gen":
-        # st.session_state.use_audio_input = False
-        # st.session_state.use_audio_output = False
-        # st.session_state.use_you_tube = False
-        # st.session_state.search_the_web = False
-        # st.session_state.show_file_uploader = False
+    # st.session_state.use_audio_input = False
+    # st.session_state.use_audio_output = False
+    # st.session_state.use_you_tube = False
+    # st.session_state.search_the_web = False
+    # st.session_state.show_file_uploader = False
 
 
 def handle_search_toggle(toggle_name: str) -> None:
@@ -371,6 +372,7 @@ def generate_popup(place):
 def show_media(
     role="assistant",
     model_output=None,
+    reasoning=None,
     img_links=None,
     video_links=None,
     MARKDOWN_PLACEHOLDER=None,
@@ -405,6 +407,9 @@ def show_media(
         with main_cols[0]:
             # write model output
             with st.chat_message(role):
+                if reasoning:
+                    with st.expander("Reasoning", expanded=False):
+                        st.markdown(reasoning)
                 st.markdown(model_output)
 
             if audio_file_path:
@@ -633,6 +638,8 @@ def sidebar_and_init() -> tuple:
     region = None
     max_results = None
     audio_data = None
+    gpt_oss_tool1 = None
+    gpt_oss_tool2 = None
 
     # ! Declaring all the session state variables
 
@@ -685,6 +692,7 @@ def sidebar_and_init() -> tuple:
             {
                 "role": "assistant",
                 "content": placeholder_messages,
+                "reasoning": None,
                 "media": {
                     "audio_file_path": None,
                     "img_links": None,
@@ -798,6 +806,7 @@ def sidebar_and_init() -> tuple:
             show_media(
                 role=message["role"],
                 model_output=message["content"],
+                reasoning=message["reasoning"],
                 img_links=message["media"]["img_links"],
                 video_links=message["media"]["video_links"],
                 MARKDOWN_PLACEHOLDER=message["media"]["MARKDOWN_PLACEHOLDER"],
@@ -830,9 +839,8 @@ def sidebar_and_init() -> tuple:
                 "Select Model",
                 [
                     "gemma2-9b-it",
-                    "mistral-saba-24b",
                     "llama-3.1-8b-instant",
-                    "meta-llama/llama-4-scout-17b-16e-instruct"
+                    "meta-llama/llama-4-scout-17b-16e-instruct",
                 ],
                 index=3,
             )
@@ -862,7 +870,7 @@ def sidebar_and_init() -> tuple:
                 [
                     "compound-beta",
                     "compound-beta-mini",
-                    "compound-beta-kimi",
+                    "compound-beta-oss",
                 ],
                 index=0,
             )
@@ -871,17 +879,44 @@ def sidebar_and_init() -> tuple:
                 "Select Model",
                 [
                     "gemma2-9b-it",
-                    "mistral-saba-24b",
                     "llama-3.1-8b-instant",
                     "llama-3.3-70b-versatile",
                     "meta-llama/llama-4-maverick-17b-128e-instruct",
                     "meta-llama/llama-4-scout-17b-16e-instruct",
+                    "openai/gpt-oss-120b",
+                    "openai/gpt-oss-20b",
                     "deepseek-r1-distill-llama-70b",
                     "qwen/qwen3-32b",
                     "moonshotai/kimi-k2-instruct",
                 ],
-                index=5,
+                index=6,
             )
+
+        if model in ("openai/gpt-oss-120b", "openai/gpt-oss-20b"):
+            st.markdown("[**Model by**](https://openai.com/)")
+            st.image(
+                "https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg",
+                width=125,
+            )
+            col1, col2 = st.columns(2)
+            with col1:
+                gpt_oss_tool1 = st.checkbox(
+                    "Browser Search",
+                    value=False,
+                )
+            with col2:
+                gpt_oss_tool2 = st.checkbox(
+                    "Code Interpreter",
+                    value=False,
+                )
+
+            if st.session_state.use_audio_input:
+                max_tokens = 32766  #! Hardcoded to 131072 for audio input to refrain from sending multiple requests to the API
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 32766, 8192, help="Max tokens in the response"
+                )
 
         if model in ("gemma2-9b-it",):
             st.markdown("[**Model by**](https://ai.google.dev/gemma)")
@@ -889,6 +924,13 @@ def sidebar_and_init() -> tuple:
                 "https://www.gstatic.com/images/branding/googlelogo/svg/googlelogo_clr_74x24px.svg",
                 width=125,
             )
+            if st.session_state.use_audio_input:
+                max_tokens = 8192  #! Hardcoded to 8192 for audio input to refrain from sending multiple requests to the API
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
+                )
 
         elif model in ("deepseek-r1-distill-llama-70b",):
             st.markdown("[**Model by**](https://www.deepseek.com/)")
@@ -896,9 +938,17 @@ def sidebar_and_init() -> tuple:
                 "https://upload.wikimedia.org/wikipedia/commons/e/ec/DeepSeek_logo.svg",
                 width=125,
             )
+            if st.session_state.use_audio_input:
+                max_tokens = 131072  #! Hardcoded to 131072 for audio input to refrain from sending multiple requests to the API
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 131072, 32768, help="Max tokens in the response"
+                )
 
         elif model in (
             "llama-3.1-8b-instant",
+            "llama-3.3-70b-versatile",
             "meta-llama/llama-4-maverick-17b-128e-instruct",
             "meta-llama/llama-4-scout-17b-16e-instruct",
         ):
@@ -907,13 +957,31 @@ def sidebar_and_init() -> tuple:
                 "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/320px-Meta_Platforms_Inc._logo.svg.png",
                 width=125,
             )
+            if model == "llama-3.1-8b-instant":
+                if st.session_state.use_audio_input:
+                    max_tokens = 8000
+                    st.success(f"{max_tokens=}")
+                elif not st.session_state.use_audio_input:
+                    max_tokens = st.slider(
+                        "Max Tokens", 0, 8000, 1024, help="Max tokens in the response"
+                    )
+            elif model == "llama-3.3-70b-versatile":
+                if st.session_state.use_audio_input:
+                    max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
+                    st.success(f"{max_tokens=}")
+                elif not st.session_state.use_audio_input:
+                    max_tokens = st.slider(
+                        "Max Tokens", 0, 32768, 8192, help="Max tokens in the response"
+                    )
+            else:
+                if st.session_state.use_audio_input:
+                    max_tokens = 8192  #! Hardcoded to 8192 for audio input to refrain from sending multiple requests to the API
+                    st.success(f"{max_tokens=}")
+                elif not st.session_state.use_audio_input:
+                    max_tokens = st.slider(
+                        "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
+                    )
 
-        elif model in ("mistral-saba-24b",):
-            st.markdown("[**Model by**](https://mistral.ai/news/mixtral-of-experts/)")
-            st.image(
-                "https://upload.wikimedia.org/wikipedia/commons/e/e6/Mistral_AI_logo_%282025%E2%80%93%29.svg",
-                width=125,
-            )
         elif model in ("compound-beta", "compound-beta-mini", "compound-beta-kimi"):
             st.markdown(
                 "[**Model by**](https://console.groq.com/docs/agentic-tooling/compound-beta)"
@@ -922,12 +990,27 @@ def sidebar_and_init() -> tuple:
                 "https://upload.wikimedia.org/wikipedia/commons/c/cc/Groq_logo.svg",
                 width=125,
             )
+            if st.session_state.use_audio_input:
+                max_tokens = 8192  #! Hardcoded to 8192 for audio input to refrain from sending multiple requests to the API
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
+                )
+
         elif model in ("moonshotai/kimi-k2-instruct",):
             st.markdown("[**Model by**](https://www.moonshot-ai.com/)")
             st.image(
                 "./utils/static/moonshotai.jpeg",
                 width=200,
             )
+            if st.session_state.use_audio_input:
+                max_tokens = 16384  #! Hardcoded to 16384 for audio input to refrain from sending multiple requests to the API
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 16384, 4096, help="Max tokens in the response"
+                )
         elif model in ("qwen/qwen3-32b",):
             st.markdown(
                 "[**Model by**](https://www.alibabacloud.com/help/en/model-studio/what-is-qwen-llm)"
@@ -936,6 +1019,13 @@ def sidebar_and_init() -> tuple:
                 "./utils/static/alibaba-cloud-logo.webp",
                 width=150,
             )
+            if st.session_state.use_audio_input:
+                max_tokens = 40960  #! Hardcoded to 40960 for audio input to refrain from sending multiple requests to the API
+                st.success(f"{max_tokens=}")
+            elif not st.session_state.use_audio_input:
+                max_tokens = st.slider(
+                    "Max Tokens", 0, 40960, 4096, help="Max tokens in the response"
+                )
 
         if not st.session_state.use_audio_input and not st.session_state.search_the_web:
             temperature = st.slider(
@@ -949,72 +1039,6 @@ def sidebar_and_init() -> tuple:
         else:
             temperature = 1.0  #! Hardcoded to 1.0 for audio input to refrain from sending multiple requests to the API
             st.success(f"{temperature=}")
-
-        if model == "mixtral-8x7b-32768":
-            if st.session_state.use_audio_input:
-                max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
-                st.success(f"{max_tokens=}")
-            elif not st.session_state.use_audio_input:
-                max_tokens = st.slider(
-                    "Max Tokens", 0, 32768, 1024, help="Max tokens in the response"
-                )
-        elif model == "moonshotai/kimi-k2-instruct":
-            if st.session_state.use_audio_input:
-                max_tokens = 16384  #! Hardcoded to 16384 for audio input to refrain from sending multiple requests to the API
-                st.success(f"{max_tokens=}")
-            elif not st.session_state.use_audio_input:
-                max_tokens = st.slider(
-                    "Max Tokens", 0, 16384, 4096, help="Max tokens in the response"
-                )
-        elif model == "qwen/qwen3-32b":
-            if st.session_state.use_audio_input:
-                max_tokens = 40960  #! Hardcoded to 40960 for audio input to refrain from sending multiple requests to the API
-                st.success(f"{max_tokens=}")
-            elif not st.session_state.use_audio_input:
-                max_tokens = st.slider(
-                    "Max Tokens", 0, 40960, 4096, help="Max tokens in the response"
-                )
-        elif model in ("deepseek-r1-distill-llama-70b"):
-            if st.session_state.use_audio_input:
-                max_tokens = 131072  #! Hardcoded to 131072 for audio input to refrain from sending multiple requests to the API
-                st.success(f"{max_tokens=}")
-            elif not st.session_state.use_audio_input:
-                max_tokens = st.slider(
-                    "Max Tokens", 0, 131072, 32768, help="Max tokens in the response"
-                )
-        elif model == "llama-3.3-70b-versatile":
-            if st.session_state.use_audio_input:
-                max_tokens = 32768  #! Hardcoded to 32768 for audio input to refrain from sending multiple requests to the API
-                st.success(f"{max_tokens=}")
-            elif not st.session_state.use_audio_input:
-                max_tokens = st.slider(
-                    "Max Tokens", 0, 32768, 8192, help="Max tokens in the response"
-                )
-        elif model == "llama-3.1-8b-instant":
-            if st.session_state.use_audio_input:
-                max_tokens = 8000
-                st.success(f"{max_tokens=}")
-            elif not st.session_state.use_audio_input:
-                max_tokens = st.slider(
-                    "Max Tokens", 0, 8000, 1024, help="Max tokens in the response"
-                )
-        elif model in (
-            "gemma2-9b-it",
-            "compound-beta",
-            "compound-beta-kimi",
-            "compound-beta-mini",
-        ):
-            if st.session_state.use_audio_input:
-                max_tokens = 8192
-                st.success(f"{max_tokens=}")
-            elif not st.session_state.use_audio_input:
-                max_tokens = st.slider(
-                    "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
-                )
-        else:
-            max_tokens = st.slider(
-                "Max Tokens", 0, 8192, 1024, help="Max tokens in the response"
-            )
 
         if not st.session_state.use_audio_input and not st.session_state.search_the_web:
             top_p = st.slider(
@@ -1344,6 +1368,7 @@ def sidebar_and_init() -> tuple:
                 {
                     "role": "assistant",
                     "content": "Let's start afresh shall we? 😁",
+                    "reasoning": None,
                     "media": {
                         "audio_file_path": None,
                         "img_links": None,
@@ -1405,6 +1430,8 @@ def sidebar_and_init() -> tuple:
         top_p,
         region,
         max_results,
+        gpt_oss_tool1,
+        gpt_oss_tool2,
         audio_data,
     )
 
@@ -1419,6 +1446,8 @@ def body(
     top_p: float = None,
     region: str = None,
     max_results: int = None,
+    gpt_oss_tool1: str = None,
+    gpt_oss_tool2: str = None,
 ) -> tuple:
     """
     The main body of the app that handles the user input and model response.
@@ -1439,6 +1468,8 @@ def body(
         -  related_questions (list): The list of related questions extracted from the search results.
         -  maps_search_results (str): The search results for the maps search.
         -  model_output (str): The model response.
+        -  final_response (str): The final response generated from the model.
+        -  reasoning (str): The reasoning behind the model response (if the user selects a reasoning model).
         -  audio_file_path (str): The path to the audio file generated from the model response.
     """
 
@@ -1455,6 +1486,8 @@ def body(
     audio_file_path = None
     model_output = None
     maps_search_results = None
+    final_response = None
+    reasoning = None
 
     if (
         prompt and st.session_state.show_file_uploader
@@ -1488,6 +1521,7 @@ def body(
                         try:
                             with st.spinner("Processing the image..."):
                                 client = Groq(api_key=st.session_state.groq_api_key)
+
                                 chat_completion = client.chat.completions.create(
                                     model=model,
                                     messages=message,
@@ -1500,22 +1534,26 @@ def body(
                                     0
                                 ].message.content
 
+                                # ? The model will see this
                                 st.session_state.messages.append(
                                     {
                                         "role": "user",
                                         "content": prompt,
                                     }
                                 )
+                                # ? The model will see this
                                 st.session_state.messages.append(
                                     {
                                         "role": "assistant",
                                         "content": model_output,
                                     }
                                 )
+                                # ? This will be displayed to the user in a nice format
                                 st.session_state.display_message.append(
                                     {
                                         "role": "user",
                                         "content": prompt,
+                                        "reasoning": None,
                                         "media": {
                                             "audio_file_path": None,
                                             "img_links": None,
@@ -1526,10 +1564,12 @@ def body(
                                         },
                                     },
                                 )
+                                # ? This will be displayed to the user in a nice format
                                 st.session_state.display_message.append(
                                     {
                                         "role": "assistant",
                                         "content": model_output,
+                                        "reasoning": None,
                                         "media": {
                                             "audio_file_path": None,
                                             "img_links": [
@@ -1729,6 +1769,7 @@ def body(
                     {
                         "role": "user",
                         "content": prompt,
+                        "reasoning": None,
                         "media": {
                             "audio_file_path": None,
                             "img_links": None,
@@ -1898,7 +1939,7 @@ def body(
                         if BODY:
                             if st.session_state.use_agentic_search:
                                 print(BODY)
-                            # Feed extracted information to the model for the model's reference
+                            # Feed extracted information to the model for the model's reference, but don't display it to the user
                             st.session_state.messages.append(
                                 {
                                     "role": "user",
@@ -1918,21 +1959,80 @@ def body(
                 # Give some feedback to the user while the model is generating the response
                 with st.spinner(spinner_message):
                     try:
-                        chat_completion = client.chat.completions.create(
-                            model=model,
-                            messages=st.session_state.messages,
-                            temperature=temperature,
-                            max_tokens=max_tokens,
-                            top_p=top_p,
-                        )
+                        if model in ("openai/gpt-oss-20b", "openai/gpt-oss-120b"):
+                            # ? Use the OpenAI gpt oss
+                            tools = []
+                            if gpt_oss_tool1 is True:
+                                tools.append({"type": "browser_search"})
+                            if gpt_oss_tool2 is True:
+                                tools.append({"type": "code_interpreter"})
+                            chat_completion = client.chat.completions.create(
+                                model=model,
+                                messages=st.session_state.messages,
+                                temperature=temperature,
+                                max_tokens=max_tokens,
+                                top_p=top_p,
+                                stream=False,
+                                tools=tools,
+                            )
 
-                        model_output = chat_completion.choices[0].message.content
+                            # ? GPT oss gives a nice formatted response separating reasoning and final response
+                            reasoning, final_response = (
+                                chat_completion.choices[0].message.reasoning,
+                                chat_completion.choices[0].message.content,
+                            )
+
+                            if reasoning:
+                                model_output = (
+                                    "<think>"
+                                    + reasoning
+                                    + "</think>"
+                                    + "\n\n"
+                                    + final_response
+                                )
+                            else:
+                                model_output = final_response
+
+                        elif model in (
+                            "deepseek-r1-distill-llama-70b",
+                            "qwen/qwen3-32b",
+                        ):  # ? Have to extract the reasoning within <think>...</think> tags
+
+                            chat_completion = client.chat.completions.create(
+                                model=model,
+                                messages=st.session_state.messages,
+                                temperature=temperature,
+                                max_tokens=max_tokens,
+                                top_p=top_p,
+                            )
+
+                            model_output = chat_completion.choices[0].message.content
+                            parts = re.findall(
+                                r"<think>\s*([\s\S]*?)\s*</think>\s*([\s\S]*?)$",
+                                model_output,
+                            )
+
+                            reasoning, final_response = parts[0]
+                            reasoning = "" if reasoning is None else reasoning
+
+                        else:  # ? for non reasoning models
+                            chat_completion = client.chat.completions.create(
+                                model=model,
+                                messages=st.session_state.messages,
+                                temperature=temperature,
+                                max_tokens=max_tokens,
+                                top_p=top_p,
+                            )
+
+                            final_response = model_output = chat_completion.choices[
+                                0
+                            ].message.content
 
                         # Keep track of the model's output for the model's future reference
                         st.session_state.messages.append(
                             {
                                 "role": "assistant",
-                                "content": model_output,
+                                "content": model_output,  # let the model see -> model_output = reasoning + output
                             }
                         )
 
@@ -1975,7 +2075,8 @@ def body(
                         st.session_state.display_message.append(
                             {
                                 "role": "assistant",
-                                "content": model_output,
+                                "content": final_response,
+                                "reasoning": reasoning,
                                 "media": {
                                     "audio_file_path": audio_file_path,
                                     "img_links": img_links,
@@ -2007,6 +2108,7 @@ def body(
                                 {
                                     "role": "assistant",
                                     "content": BODY,
+                                    "reasoning": reasoning,
                                     "media": {
                                         "audio_file_path": None,
                                         "img_links": img_links,
@@ -2079,6 +2181,8 @@ def body(
         related_questions,
         maps_search_results,
         model_output,
+        final_response,
+        reasoning,
         audio_file_path,
     )
 
@@ -2105,6 +2209,10 @@ if __name__ == "__main__":
     encoded_image = None
     prompt = None  # ? For img gen
     payload = None  # ? For img gen
+    final_response = None
+    reasoning = None
+    gpt_oss_tool1 = None
+    gpt_oss_tool2 = None
 
     all_sidebar_values = sidebar_and_init()
     audio_data = all_sidebar_values[-1]
@@ -2290,6 +2398,8 @@ if __name__ == "__main__":
             related_questions,
             maps_search_results,
             model_output,
+            final_response,
+            reasoning,
             audio_file_path,
         ) = body(
             current_prompt,
@@ -2300,7 +2410,8 @@ if __name__ == "__main__":
 
         show_media(
             "assistant",
-            model_output,
+            final_response,
+            reasoning,
             img_links,
             video_links,
             MARKDOWN_PLACEHOLDER,

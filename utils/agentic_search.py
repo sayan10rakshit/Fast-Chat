@@ -1,4 +1,5 @@
 import os
+import re
 import random
 import time
 import json
@@ -158,7 +159,18 @@ def summarize(
             stop=None,
             seed=42,
         )
-        distilled_info += response.choices[0].message.content
+        if model in ("qwen/qwen3-32b", "deepseek-r1-distill-llama-70b"):
+            content = response.choices[0].message.content
+            parts = re.findall(
+                r"<think>\s*([\s\S]*?)\s*</think>\s*([\s\S]*?)$", content
+            )
+            if parts:
+                _, final_response = parts[0]
+                distilled_info += final_response.strip()
+            else:
+                distilled_info += content.strip()
+        else:
+            distilled_info += response.choices[0].message.content
 
         return distilled_info
 
@@ -286,7 +298,8 @@ def search_summary(
         model_list = [
             ("llama-3.1-8b-instant", 8000),
             ("llama-3.3-70b-versatile", 32768),
-            ("mistral-saba-24b", 32768),
+            ("openai/gpt-oss-120b", 32766),
+            ("openai/gpt-oss-20b", 32768),
             ("meta-llama/llama-4-maverick-17b-128e-instruct", 8192),
             ("meta-llama/llama-4-scout-17b-16e-instruct", 8192),
             ("deepseek-r1-distill-llama-70b", 131072),
@@ -296,7 +309,9 @@ def search_summary(
 
         #! This is deliberately done to mitigate the rate limit errors faced for each model
         # * We can play around with the weights to see which model works best
-        model, max_tokens = random.choices(model_list, weights=[1, 1, 1, 1, 1, 1, 1, 1], k=1)[0]
+        model, max_tokens = random.choices(
+            model_list, weights=[1, 1, 1, 1, 1, 1, 1, 1, 1], k=1
+        )[0]
         distilled_info += summarize(
             content_from_links=all_info,
             model=model,
@@ -330,8 +345,7 @@ def generate_search_strings(
     **Returns**
         - **json_response (dict)**: The JSON response containing the search strings
     """
-    prompt = (
-        """
+    prompt = """
         # Research LLM Prompt Template for JSON Output
 
         You are an advanced research assistant designed to break down user queries into structured search objectives and generate relevant search strings. Your task is to analyze the given prompt and create a plan for gathering information effectively, outputting the result in a specific JSON format.
@@ -383,14 +397,12 @@ def generate_search_strings(
 
         Now, based on the user's query, generate the appropriate objectives, search strings, and final objective following this JSON structure.
             """
-        + """\n The user prompt is: """
-        + query
-    )
 
     model_list = [
         ("llama-3.1-8b-instant", 8000),
         ("llama-3.3-70b-versatile", 32768),
-        ("mistral-saba-24b", 32768),
+        ("openai/gpt-oss-120b", 32766),
+        ("openai/gpt-oss-20b", 32768),
         ("meta-llama/llama-4-maverick-17b-128e-instruct", 8192),
         ("meta-llama/llama-4-scout-17b-16e-instruct", 8192),
         ("deepseek-r1-distill-llama-70b", 131072),
@@ -399,13 +411,18 @@ def generate_search_strings(
     ]
 
     #! This is deliberately done to mitigate the rate limit errors faced for each model
-    model, max_tokens = random.choices(model_list, weights=[1, 1, 1, 1, 1, 1, 1, 1], k=1)[0]
+    model, max_tokens = random.choices(
+        model_list, weights=[1, 1, 1, 1, 1, 1, 1, 1, 1], k=1
+    )[0]
     print(f"\n\nModel selected for generating search strings: {model}\n\n")
 
     client = Groq(api_key=api_key)
     response = client.chat.completions.create(
         model=model,
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": query},
+        ],
         temperature=1,
         max_tokens=max_tokens,
         top_p=0.9,
@@ -415,8 +432,17 @@ def generate_search_strings(
         seed=42,
     )
 
+    content = response.choices[0].message.content
+    if model in ("qwen/qwen3-32b", "deepseek-r1-distill-llama-70b"):
+        parts = re.findall(r"<think>\s*([\s\S]*?)\s*</think>\s*([\s\S]*)", content)
+        if parts:
+            _, final_response = parts[0]
+            content = final_response.strip()
+        else:
+            content = content.strip()
+
     try:
-        json_response = json.loads(response.choices[0].message.content)
+        json_response = json.loads(content)
         print(f"\n\n{json.dumps(json_response, indent=5)}\n\n")
         return json_response
     except json.JSONDecodeError:
