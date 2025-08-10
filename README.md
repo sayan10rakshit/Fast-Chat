@@ -1,12 +1,10 @@
-
----
-
 # ⚡ Fast-Chat: Elevating Lightning-Fast Conversations with AI
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://fast-chat.streamlit.app/)
 
 <img src="utils/static/Fast-Chat_avatar.gif" alt="Fast-Chat" width="400" align="right" />
 
+---
 ## Key Features
 
 - ⚡ **Instant Responses**: Enjoy lightning-fast replies powered by GROQ’s advanced AI technology, ensuring a smooth conversation flow.
@@ -17,36 +15,39 @@
 - 📺 **YouTube Understanding**: Analyze YouTube videos (up to 25 mins with English subtitles) by simply pasting a link and asking questions about the content.
 - 🎙️ **Voice Interaction**: Talk directly to Fast-Chat with built-in voice recognition, enhancing conversational engagement.
 - 🗣️ **Audio Output**: Receive responses in an expressive voice for an immersive, interactive experience.
-- 🎨 **Image Generation**: Get custom-generated images based on your requests.
 - 🖼️ **Image Interpretation**: Submit images and receive intelligent responses to visual content.
 - 📝 **Contextual Continuity**: Retain conversation context for a more tailored and relevant interaction.
 
 ---
 
-## Backed By
 
-[![Gemma Model](https://img.shields.io/badge/Gemma-Google_AI-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/gemma)
-[![Llama Model](https://img.shields.io/badge/Llama-Meta_AI-0668E1?style=for-the-badge&logo=meta&logoColor=white)](https://llama.meta.com/)
-[![Mistral AI](https://img.shields.io/badge/Mistral-Mistral_AI-FF6B6B?style=for-the-badge&logo=mistralai&logoColor=white)](https://mistral.ai/news/mixtral-of-experts/)
-[![Microsoft](https://img.shields.io/badge/Microsoft-Microsoft_Research-00A4EF?style=for-the-badge&logo=microsoft&logoColor=white)](https://azure.microsoft.com/en-us/services/cognitive-services/computer-vision/)
-[![Groq AI](https://img.shields.io/badge/Groq-Inference_Platform-000000?style=for-the-badge&logo=groq&logoColor=white)](https://wow.groq.com/why-groq/)
-[![Eleven Labs](https://img.shields.io/badge/ElevenLabs-Voice_Synthesis-3D3D3D?style=for-the-badge&logo=elevenlabs&logoColor=white)](https://elevenlabs.io/)
-[![Prodia](https://img.shields.io/badge/Prodia-Image_Generation-7B68EE?style=for-the-badge&logo=prodia&logoColor=white)](https://prodia.com/)
-
-<div style="text-align: center;">
-  <img src="utils/static/groq.jpg" alt="Groq Image" width="500" height="300" style="margin-bottom: 20px;">
-</div>
-
-<div style="display: flex; justify-content: space-around; margin-bottom: 20px;">
-  <img src="utils/static/gemma.webp" alt="Gemma Image" width="166" height="100">
-  <img src="utils/static/llama.webp" alt="Llama Image" width="166" height="100">
-  <img src="utils/static/mistral_ai_image.jpg" alt="Mistral AI Image" width="166" height="100">
-</div>
-
-<div style="display: flex; justify-content: space-around;">
-  <img src="utils/static/elevenlabs.jpg" alt="ElevenLabs Image" width="166" height="100">
-  <img src="utils/static/microsoft.png" alt="Microsoft Image" width="166" height="100">
-  <img src="utils/static/prodia.png" alt="Prodia Image" width="166" height="100">
+<div style="text-align: center; margin-bottom: 30px;">
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 600px; margin: 0 auto;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <img src="utils/static/groq-circle.webp" alt="Groq" width="35" height="35" style="border-radius: 50%;">
+      <span style="font-weight: bold; font-size: 16px;">Groq</span>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <img src="utils/static/openai.webp" alt="OpenAI" width="35" height="35" style="border-radius: 50%;">
+      <span style="font-weight: bold; font-size: 16px;">OpenAI</span>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <img src="utils/static/Meta_logo.webp" alt="Meta" width="35" height="25" style="border-radius:0%;">
+      <span style="font-weight: bold; font-size: 16px;">Meta</span>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <img src="utils/static/deepseek_logo.webp" alt="DeepSeek" width="35" height="35" style="border-radius: 50%;">
+      <span style="font-weight: bold; font-size: 16px;">DeepSeek</span>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <img src="utils/static/moonshot_logo.webp" alt="Moonshot AI" width="35" height="35" style="border-radius: 50%;">
+      <span style="font-weight: bold; font-size: 16px;">Moonshot AI</span>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <img src="utils/static/qwen_logo.webp" alt="Alibaba Cloud" width="35" height="35" style="border-radius: 50%;">
+      <span style="font-weight: bold; font-size: 16px;">Alibaba Cloud</span>
+    </div>
+  </div>
 </div>
 
 ---
@@ -62,7 +63,6 @@
   - [🔗GROQ API Key](https://console.groq.com/keys)
   - [🔗SerpAPI Key](https://serpapi.com/dashboard) (optional)
   - [🔗ElevenLabs API Key](https://elevenlabs.io/app/speech-synthesis/text-to-speech) (optional)
-  - [🔗Prodia API Key](https://app.prodia.com/api) (optional)
 
 ### Installation
 
