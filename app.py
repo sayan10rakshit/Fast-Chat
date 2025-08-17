@@ -492,83 +492,84 @@ def show_media(
         # ? Display the maps search results
         if maps_search_results is not None:
             try:
-                map_data = json.loads(maps_search_results)
-                data = map_data["local_results"]
-                # Create a map centered at the first place's coordinates with a dark theme
-                m = folium.Map(
-                    location=[
-                        data[0]["gps_coordinates"]["latitude"],
-                        data[0]["gps_coordinates"]["longitude"],
-                    ],
-                    zoom_start=14,
-                    tiles="cartodbdark_matter",
-                )
-
-                for place in data:
-                    popup_html = generate_popup(place)
-                    iframe = IFrame(popup_html, width=500, height=300)
-                    popup = folium.Popup(iframe, max_width=500)
-
-                    # Add a place name with a high-visibility color and no overlapping
-                    folium.Marker(
+                with st.spinner("Loading map..."):
+                    map_data = json.loads(maps_search_results)
+                    data = map_data["local_results"]
+                    # Create a map centered at the first place's coordinates with a dark theme
+                    m = folium.Map(
                         location=[
+                            data[0]["gps_coordinates"]["latitude"],
+                            data[0]["gps_coordinates"]["longitude"],
+                        ],
+                        zoom_start=14,
+                        tiles="cartodbdark_matter",
+                    )
+
+                    for place in data:
+                        popup_html = generate_popup(place)
+                        iframe = IFrame(popup_html, width=500, height=300)
+                        popup = folium.Popup(iframe, max_width=500)
+
+                        # Add a place name with a high-visibility color and no overlapping
+                        folium.Marker(
+                            location=[
+                                place["gps_coordinates"]["latitude"],
+                                place["gps_coordinates"]["longitude"],
+                            ],
+                            icon=DivIcon(
+                                icon_size=(200, 36),
+                                icon_anchor=(0, 0),
+                                html=f"""
+                                <div style="
+                                    display: inline-block;
+                                    font-size: 14px;
+                                    color: #FFD700;  /* Gold color for high visibility */
+                                    background-color: rgba(0, 0, 0, 0.7);
+                                    padding: 5px 10px;
+                                    border-radius: 8px;
+                                    border: 2px solid #FFD700;
+                                    white-space: nowrap;
+                                    max-width: 200px;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;">
+                                    {place["title"]}
+                                </div>
+                                """,
+                            ),
+                        ).add_to(m)
+
+                        # Add marker with popup
+                        folium.Marker(
+                            location=[
+                                place["gps_coordinates"]["latitude"],
+                                place["gps_coordinates"]["longitude"],
+                            ],
+                            popup=popup,
+                            icon=folium.Icon(color="lightgray", icon="info-sign"),
+                        ).add_to(m)
+
+                    # Fit map to bounds of all markers
+                    locations = [
+                        [
                             place["gps_coordinates"]["latitude"],
                             place["gps_coordinates"]["longitude"],
-                        ],
-                        icon=DivIcon(
-                            icon_size=(200, 36),
-                            icon_anchor=(0, 0),
-                            html=f"""
-                            <div style="
-                                display: inline-block;
-                                font-size: 14px;
-                                color: #FFD700;  /* Gold color for high visibility */
-                                background-color: rgba(0, 0, 0, 0.7);
-                                padding: 5px 10px;
-                                border-radius: 8px;
-                                border: 2px solid #FFD700;
-                                white-space: nowrap;
-                                max-width: 200px;
-                                overflow: hidden;
-                                text-overflow: ellipsis;">
-                                {place["title"]}
-                            </div>
-                            """,
-                        ),
-                    ).add_to(m)
-
-                    # Add marker with popup
-                    folium.Marker(
-                        location=[
-                            place["gps_coordinates"]["latitude"],
-                            place["gps_coordinates"]["longitude"],
-                        ],
-                        popup=popup,
-                        icon=folium.Icon(color="lightgray", icon="info-sign"),
-                    ).add_to(m)
-
-                # Fit map to bounds of all markers
-                locations = [
-                    [
-                        place["gps_coordinates"]["latitude"],
-                        place["gps_coordinates"]["longitude"],
+                        ]
+                        for place in data
                     ]
-                    for place in data
-                ]
-                m.fit_bounds(locations)
+                    m.fit_bounds(locations)
 
-                with st.container():
-                    # Render map in Streamlit
-                    st_folium(m, width=725)
-                    if map_data["search_metadata"]["google_maps_url"]:
-                        st.markdown(
-                            '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">',
-                            unsafe_allow_html=True,
-                        )
-                        st.markdown(
-                            f"<i class='fab fa-google'></i>&nbsp;&nbsp;&nbsp;[View on Google Maps]({map_data['search_metadata']['google_maps_url']})",
-                            unsafe_allow_html=True,
-                        )
+                    with st.container():
+                        # Render map in Streamlit
+                        st_folium(m, width=725)
+                        if map_data["search_metadata"]["google_maps_url"]:
+                            st.markdown(
+                                '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">',
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                f"<i class='fab fa-google'></i>&nbsp;&nbsp;&nbsp;[View on Google Maps]({map_data['search_metadata']['google_maps_url']})",
+                                unsafe_allow_html=True,
+                            )
 
             except Exception as e:
                 print(e)

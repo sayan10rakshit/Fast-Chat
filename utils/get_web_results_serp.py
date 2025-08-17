@@ -2,7 +2,6 @@ import json
 import groq
 from groq import Groq
 from serpapi import GoogleSearch
-from serpapi import GoogleSearch
 from concurrent.futures import ThreadPoolExecutor
 from utils.deep_search import fetch_text
 from utils.extract_subs import filter_links
@@ -321,6 +320,7 @@ def get_web_results(
         "safe": "off",
     }
 
+    yt_links = None
     with ThreadPoolExecutor() as executor:
         body, markdown_placeholder, related_questions = executor.submit(
             search_the_web,
